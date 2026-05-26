@@ -1,0 +1,6 @@
+{
+  "name": "TediMed",
+  "description": "A comprehensive phone-first healthcare companion for scanning prescriptions, managing pill reminders, tracking medical medical records, chatting with a health assistant, and managing family profiles.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

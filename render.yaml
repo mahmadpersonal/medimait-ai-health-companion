@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: tedimed-api
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: GEMINI_VISION_MODEL
+        value: gemini-2.5-flash-lite
+      - key: ALLOWED_ORIGINS
+        value: https://localhost,http://localhost:3000,http://localhost:5173
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
