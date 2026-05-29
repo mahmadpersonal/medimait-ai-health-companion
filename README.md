@@ -1,64 +1,106 @@
-# TediMed - Phone-First Healthcare Companion
+# MediMait - AI Health Companion
 
-TediMed is a smooth, premium, mobile-first health companion web application designed for families and users. It lets users scan prescriptions via Gemini OCR, structure instructions into everyday plain words, schedule pill reminders, create profiles and files, and chat with an AI health advisor powered by OpenAI GPT-4o-mini.
+MediMait is a mobile-first healthcare companion built to make prescription management easier for families. The app scans prescription images, extracts medicine details with AI OCR, organizes medical records by profile, schedules pill reminders, and provides a safety-aware health chat assistant.
 
-## Main Key Features
+> Friendly health guidance only. MediMait is not a diagnostic tool and does not replace a doctor, pharmacist, or emergency care.
 
-1. **Scan Prescriptions**: Easily upload images of handwriting or printed medicine sheets and dissect names, timing groups, treatment durations, simple purposes, actions, warning lists, and precautions.
-2. **Pill Tracker/Box**: Reminds users to take medications categorized across morning, afternoon, evening, and night slots.
-3. **Medical Files**: Consolidates multiple scanned prescriptions as local cards searchable and filterable by doctor, date, or profile.
-4. **General ChatBot**: Compassionate medical guide bot utilizing OpenAI to detail conditions, side-effects, or simple terms safely under rigid safety guards.
-5. **Me Profiles**: Manage custom family profiles (Myself, Father, Mother, Other) with distinct ages, allergies, and preconditions.
+## Highlights
 
----
+- Prescription scanning with Gemini OCR
+- Medicine extraction for dosage, timing, duration, instructions, purpose, side effects, and precautions
+- Pill reminder scheduling with Android local notifications
+- Medical files and profile-based record management
+- MediBot chat assistant powered by OpenAI GPT-4o-mini
+- Saved-profile and saved-record context support for more personalized responses
+- Phone-first UI packaged as an Android app with Capacitor
+- Backend proxy design to keep AI API keys out of the APK
 
-## Technical Specifications
+## Product Screens
 
-The application uses **React, TypeScript, Vite, and Tailwind CSS (v4)**, with a customized **Express Backend** proxy to keep sensitive AI API Keys completely hidden from client bundle queries.
+- Scan: capture or upload prescription images and review extracted medicines
+- Pills: manage reminders by selected weekdays and timing groups
+- Files: save, edit, view, and delete prescription records
+- Chat: ask MediBot about medicines, symptoms, and care guidance
+- Me: manage personal and family health profiles
 
-- **Vite SPA Frontend Mode**
-- **Express Backend Server**
-- **Google GenAI SDK** for scanning
-- **OpenAI gpt-4o-mini API Interface** for clinical guidance
+## Tech Stack
 
----
+- Frontend: React, TypeScript, Vite, Tailwind CSS
+- Mobile packaging: Capacitor Android
+- Backend: Express, Node.js
+- AI OCR: Google Gemini 2.5 Flash Lite
+- AI chat: OpenAI GPT-4o-mini
+- Storage: browser localStorage for local app data
+- Notifications: Capacitor Local Notifications
+- Deployment: Render-ready Node web service
 
-## Setup Instructions
+## Architecture
 
-Ensure you have [Node.js (v18+)](https://nodejs.org/) installed inside your workspace.
+The Android app runs a Capacitor-wrapped Vite frontend. AI requests are routed through the deployed Express backend so production API keys remain server-side.
 
-### 1. Configure the Secrets (Environment Variables)
-
-Create `.env` file at the root or add the following keys inside AI Studio Secrets tab:
-
-```env
-VITE_GEMINI_API_KEY="your-google-gemini-key"
-VITE_OPENAI_API_KEY="your-openai-api-key"
+```text
+Android APK
+  -> Capacitor WebView
+  -> React/Vite app
+  -> Express API backend
+  -> Gemini OCR / OpenAI Chat APIs
 ```
 
-### 2. Installations
+## Security Notes
 
-Execute package dependency downloads:
+- Real API keys should be configured as backend environment variables.
+- Do not hardcode OpenAI or Gemini keys into the mobile APK.
+- `.env` files are intentionally ignored by Git.
+- The backend accepts mobile app requests from the Capacitor origin.
+
+## Environment Variables
+
+Create a `.env` file locally or configure these variables in your deployment platform:
+
+```env
+GEMINI_API_KEY="your-gemini-api-key"
+OPENAI_API_KEY="your-openai-api-key"
+GEMINI_VISION_MODEL="gemini-2.5-flash-lite"
+NODE_ENV="production"
+ALLOWED_ORIGINS="https://localhost,http://localhost:3000,http://localhost:5173"
+VITE_API_BASE_URL="https://your-backend-url.example.com"
+```
+
+## Local Development
 
 ```bash
 npm install
-```
-
-### 3. Execution (Development Dev Mode)
-
-Run the local development Express + Vite multi-port cluster:
-
-```bash
 npm run dev
 ```
 
-The application will bind onto port **3000** automatically.
+The development server runs the Express API and Vite app together.
 
-### 4. Build Strategy
-
-Compile both TypeScript frontend static layers and esbuild Node CommonJS server routines:
+## Production Build
 
 ```bash
 npm run build
 npm start
 ```
+
+## Android Build
+
+```bash
+npm run build
+npx cap sync android
+cd android
+./gradlew assembleDebug
+```
+
+The debug APK is generated at:
+
+```text
+android/app/build/outputs/apk/debug/app-debug.apk
+```
+
+## Deployment
+
+This repository includes `render.yaml` for Render deployment. Add the required secret environment variables in Render before deploying.
+
+## Portfolio Summary
+
+MediMait demonstrates a full-stack, AI-assisted mobile health workflow: OCR extraction, medical record organization, reminder scheduling, contextual chat, backend API security, and native Android packaging from a React/Vite codebase.
