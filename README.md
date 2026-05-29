@@ -1,3 +1,5 @@
+![MediMait Banner](https://i.ibb.co/39pppVdh/your-image-name.png)
+
 # MediMait - AI Health Companion
 
 MediMait is a mobile-first healthcare companion built to make prescription management easier for families. The app scans prescription images, extracts medicine details with AI OCR, organizes medical records by profile, schedules pill reminders, and provides a safety-aware health chat assistant.
