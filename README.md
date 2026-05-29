@@ -1,4 +1,4 @@
-![MediMait Banner](https://i.ibb.co/39pppVdh/your-image-name.png)
+<a href="https://ibb.co/39pppVdh"><img src="https://i.ibb.co/YFcccJQj/Chat-GPT-Image-May-29-2026-07-58-27-PM.png" alt="Chat-GPT-Image-May-29-2026-07-58-27-PM" border="0"></a>
 
 # MediMait - AI Health Companion
 
