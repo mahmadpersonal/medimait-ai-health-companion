@@ -14,23 +14,40 @@ import { useProfiles } from "./hooks/useProfiles";
 import { useReminders } from "./hooks/useReminders";
 import { useRecords } from "./hooks/useRecords";
 import { useChat } from "./hooks/useChat";
+import { ScanDraft } from "./types";
+
+const emptyScanDraft: ScanDraft = {
+  image: null,
+  pendingCameraImage: null,
+  scanResult: null,
+  selectedProfileId: "",
+  recordNotes: "",
+  remindersSaved: false,
+  recordSaved: false,
+};
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<NavTab>("scan");
+  const [scanDraft, setScanDraft] = useState<ScanDraft>(emptyScanDraft);
   const [, startTransition] = useTransition();
 
   // Custom persistent hooks
-  const { profiles, addProfile, deleteProfile } = useProfiles();
+  const { profiles, addProfile, updateProfile, deleteProfile } = useProfiles();
   const { reminders, addReminder, deleteReminder, toggleTakenToday, getTodayStr, isReminderDueOn } = useReminders();
   const { records, addRecord, updateRecord, deleteRecord } = useRecords();
   const {
     messages,
+    threads,
+    activeThreadId,
     loading,
     error,
     useSavedRecords,
     setUseSavedRecords,
     sendMessage,
     clearChat,
+    createThread,
+    selectThread,
+    renameThread,
   } = useChat();
 
   // Handle Bottom tab click
@@ -51,6 +68,9 @@ export default function App() {
             profiles={profiles}
             setActiveTab={handleTabChange}
             pillsCount={activePillsCount}
+            scanDraft={scanDraft}
+            onScanDraftChange={setScanDraft}
+            onNewScan={() => setScanDraft(emptyScanDraft)}
           />
         );
       case "pills":
@@ -80,12 +100,17 @@ export default function App() {
         return (
           <ChatPage
             messages={messages}
+            threads={threads}
+            activeThreadId={activeThreadId}
             loading={loading}
             error={error}
             useSavedRecords={useSavedRecords}
             onSetUseSavedRecords={setUseSavedRecords}
             onSendMessage={sendMessage}
             onClearChat={clearChat}
+            onCreateThread={createThread}
+            onSelectThread={selectThread}
+            onRenameThread={renameThread}
             profiles={profiles}
             reminders={reminders}
             records={records}
@@ -96,6 +121,7 @@ export default function App() {
           <MePage
             profiles={profiles}
             onAddProfile={addProfile}
+            onUpdateProfile={updateProfile}
             onDeleteProfile={deleteProfile}
           />
         );
@@ -107,6 +133,9 @@ export default function App() {
             profiles={profiles}
             setActiveTab={handleTabChange}
             pillsCount={activePillsCount}
+            scanDraft={scanDraft}
+            onScanDraftChange={setScanDraft}
+            onNewScan={() => setScanDraft(emptyScanDraft)}
           />
         );
     }

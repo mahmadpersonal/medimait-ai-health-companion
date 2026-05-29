@@ -1,10 +1,12 @@
-import { Profile, MedicalRecord, Reminder, ChatMessage } from "../types";
+import { Profile, MedicalRecord, Reminder, ChatMessage, ChatThread } from "../types";
 
 const KEYS = {
   PROFILES: "tedimed_profiles",
   RECORDS: "tedimed_records",
   REMINDERS: "tedimed_reminders",
   CHATS: "tedimed_chats",
+  CHAT_THREADS: "medimait_chat_threads",
+  ACTIVE_CHAT_THREAD: "medimait_active_chat_thread",
 };
 
 export const storageService = {
@@ -48,11 +50,42 @@ export const storageService = {
     localStorage.setItem(KEYS.CHATS, JSON.stringify(chats));
   },
 
+  getChatThreads(): ChatThread[] {
+    const data = localStorage.getItem(KEYS.CHAT_THREADS);
+    if (data) return JSON.parse(data);
+
+    const legacyChats = this.getChats();
+    if (legacyChats.length === 0) return [];
+
+    const thread: ChatThread = {
+      id: `thread_${Date.now()}`,
+      title: "Health chat",
+      messages: legacyChats,
+      createdAt: legacyChats[0]?.timestamp || new Date().toISOString(),
+      updatedAt: legacyChats[legacyChats.length - 1]?.timestamp || new Date().toISOString(),
+    };
+    return [thread];
+  },
+
+  saveChatThreads(threads: ChatThread[]): void {
+    localStorage.setItem(KEYS.CHAT_THREADS, JSON.stringify(threads.slice(0, 3)));
+  },
+
+  getActiveChatThreadId(): string | null {
+    return localStorage.getItem(KEYS.ACTIVE_CHAT_THREAD);
+  },
+
+  saveActiveChatThreadId(id: string): void {
+    localStorage.setItem(KEYS.ACTIVE_CHAT_THREAD, id);
+  },
+
   // Utility to fully clear local memory for debugging/re-testing
   clearAll(): void {
     localStorage.removeItem(KEYS.PROFILES);
     localStorage.removeItem(KEYS.RECORDS);
     localStorage.removeItem(KEYS.REMINDERS);
     localStorage.removeItem(KEYS.CHATS);
+    localStorage.removeItem(KEYS.CHAT_THREADS);
+    localStorage.removeItem(KEYS.ACTIVE_CHAT_THREAD);
   },
 };

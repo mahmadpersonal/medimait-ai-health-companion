@@ -66,3 +66,21 @@ export interface ChatMessage {
   text: string;
   timestamp: string;
 }
+
+export interface ChatThread {
+  id: string;
+  title: string;
+  messages: ChatMessage[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ScanDraft {
+  image: string | null;
+  pendingCameraImage: string | null;
+  scanResult: PrescriptionScanResult | null;
+  selectedProfileId: string;
+  recordNotes: string;
+  remindersSaved: boolean;
+  recordSaved: boolean;
+}

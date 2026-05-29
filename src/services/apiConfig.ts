@@ -18,7 +18,7 @@ export function apiUrl(path: string) {
 
   if (isPackagedAndroidWebView()) {
     throw new Error(
-      "TediMed AI services are not configured for this mobile build. Set VITE_API_BASE_URL to your deployed TediMed API server and rebuild the APK."
+      "MediMait AI services are not configured for this mobile build. Set VITE_API_BASE_URL to your deployed MediMait API server and rebuild the APK."
     );
   }
 

@@ -27,6 +27,24 @@ function nextDateForWeekday(weekday: WeekdayNumber, time: string) {
   return target;
 }
 
+async function ensurePillChannel() {
+  if (!Capacitor.isNativePlatform()) return;
+
+  try {
+    await LocalNotifications.createChannel({
+      id: "pill-reminders",
+      name: "Pill reminders",
+      description: "Medicine timing reminders",
+      importance: 5,
+      visibility: 1,
+      sound: "default",
+      vibration: true,
+    });
+  } catch (e) {
+    console.warn("Pill reminder notification channel could not be created:", e);
+  }
+}
+
 export const notificationService = {
   isSupported(): boolean {
     return Capacitor.isNativePlatform() ||
@@ -68,12 +86,14 @@ export const notificationService = {
 
     try {
       if (Capacitor.isNativePlatform()) {
+        await ensurePillChannel();
         await LocalNotifications.schedule({
           notifications: [
             {
               id: Date.now() % 2147483647,
               title,
               body,
+              channelId: "pill-reminders",
               schedule: { at: new Date(Date.now() + 250) },
             },
           ],
@@ -103,11 +123,13 @@ export const notificationService = {
 
     try {
       if (Capacitor.isNativePlatform()) {
+        await ensurePillChannel();
         await LocalNotifications.schedule({
           notifications: days.map((day, index) => ({
             id: notificationIds[index] || ((Date.now() + index) % 2147483647),
             title: `Time to take ${reminder.medicineName}`,
             body: `Dose: ${reminder.dose}${reminder.notes ? `. ${reminder.notes}` : ""}`,
+            channelId: "pill-reminders",
             schedule: {
               on: {
                 weekday: day as Weekday,

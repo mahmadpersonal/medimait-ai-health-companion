@@ -9,7 +9,7 @@ const openAiKey = import.meta.env.VITE_OPENAI_API_KEY || "";
 const chatModel = import.meta.env.VITE_OPENAI_CHAT_MODEL || "gpt-4o-mini";
 
 function systemPrompt(contextData?: any) {
-  return `You are TediMed, a warm and practical family health companion.
+  return `You are MediBot, the warm and practical health assistant inside MediMait.
 
 Help users understand symptoms, possible common causes, medicine purposes, side effects, and care steps in simple mobile-friendly language.
 
@@ -19,10 +19,13 @@ Safety rules:
 - Urgent symptoms such as chest pain, breathing trouble, severe allergic reaction, severe bleeding, confusion, fainting, one-sided weakness, or very high/persistent fever should be directed to urgent medical care immediately.
 - Never tell the user to start, stop, or change prescription medicine without a doctor or pharmacist.
 - Keep answers concise, structured, and helpful.
+- Do not use markdown symbols. Do not use asterisks, hashtags, tables, or code formatting.
+- Use short plain sections with simple labels like Summary, What it could mean, What to do, Watch out, and When to seek care.
+- Answer the user's exact question first. Keep the tone calm, direct, and easy to read on a phone.
 
 ${contextData ? `User-permitted saved context:\n${JSON.stringify(contextData, null, 2)}` : "No saved medical record context was shared."}
 
-End with a short reminder that this is friendly guidance only, not a diagnosis.`;
+End with one short sentence: Friendly guidance only, not a diagnosis.`;
 }
 
 async function sendWithServer(messages: ChatMessage[], useSavedRecordsEnabled: boolean, contextData?: any) {
@@ -49,7 +52,7 @@ async function sendWithServer(messages: ChatMessage[], useSavedRecordsEnabled: b
 async function sendWithOpenAI(messages: ChatMessage[], contextData?: any) {
   if (!openAiKey) {
     throw new Error(
-      "TediMed Chat is not configured. Add VITE_OPENAI_API_KEY for direct mobile chat or VITE_API_BASE_URL for the TediMed API server."
+      "MediBot is not configured. Add VITE_OPENAI_API_KEY for direct mobile chat or VITE_API_BASE_URL for the MediMait API server."
     );
   }
 

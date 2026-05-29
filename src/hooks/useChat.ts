@@ -1,21 +1,99 @@
-import { useState, useEffect } from "react";
-import { ChatMessage } from "../types";
+import { useEffect, useMemo, useState } from "react";
+import { ChatMessage, ChatThread } from "../types";
 import { storageService } from "../services/storageService";
 import { chatService } from "../services/chatService";
 import { usageLimitService } from "../services/usageLimitService";
 
+const makeThread = (title = "New chat"): ChatThread => {
+  const now = new Date().toISOString();
+  return {
+    id: `thread_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+    title,
+    messages: [],
+    createdAt: now,
+    updatedAt: now,
+  };
+};
+
+const getStarterTitle = (text: string) => {
+  const cleaned = text.replace(/\s+/g, " ").trim();
+  return cleaned.length > 28 ? `${cleaned.slice(0, 28)}...` : cleaned || "New chat";
+};
+
 export function useChat() {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [threads, setThreads] = useState<ChatThread[]>([]);
+  const [activeThreadId, setActiveThreadId] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [useSavedRecords, setUseSavedRecords] = useState(false);
 
   useEffect(() => {
-    setMessages(storageService.getChats());
+    const savedThreads = storageService.getChatThreads();
+    const initialThreads = savedThreads.length ? savedThreads.slice(0, 3) : [makeThread("New chat")];
+    const savedActiveId = storageService.getActiveChatThreadId();
+    const activeId = initialThreads.some((thread) => thread.id === savedActiveId)
+      ? savedActiveId!
+      : initialThreads[0].id;
+
+    setThreads(initialThreads);
+    setActiveThreadId(activeId);
+    storageService.saveChatThreads(initialThreads);
+    storageService.saveActiveChatThreadId(activeId);
   }, []);
 
+  const activeThread = useMemo(
+    () => threads.find((thread) => thread.id === activeThreadId) || threads[0],
+    [threads, activeThreadId]
+  );
+
+  const messages = activeThread?.messages || [];
+
+  const persistThreads = (nextThreads: ChatThread[]) => {
+    const limited = nextThreads.slice(0, 3);
+    setThreads(limited);
+    storageService.saveChatThreads(limited);
+  };
+
+  const selectThread = (id: string) => {
+    setActiveThreadId(id);
+    storageService.saveActiveChatThreadId(id);
+    setError(null);
+  };
+
+  const createThread = () => {
+    if (threads.length >= 3) return false;
+    const thread = makeThread(`Chat ${threads.length + 1}`);
+    const nextThreads = [thread, ...threads].slice(0, 3);
+    persistThreads(nextThreads);
+    selectThread(thread.id);
+    return true;
+  };
+
+  const renameThread = (id: string, title: string) => {
+    const cleanTitle = title.trim();
+    if (!cleanTitle) return;
+
+    persistThreads(
+      threads.map((thread) =>
+        thread.id === id ? { ...thread, title: cleanTitle.slice(0, 36), updatedAt: new Date().toISOString() } : thread
+      )
+    );
+  };
+
+  const updateActiveThreadMessages = (nextMessages: ChatMessage[]) => {
+    const now = new Date().toISOString();
+    const nextThreads = threads.map((thread) => {
+      if (thread.id !== activeThreadId) return thread;
+      const title = thread.messages.length === 0 && nextMessages.length > 0
+        ? getStarterTitle(nextMessages[0].text)
+        : thread.title;
+      return { ...thread, title, messages: nextMessages, updatedAt: now };
+    });
+    persistThreads(nextThreads);
+  };
+
   const sendMessage = async (text: string, contextData?: any) => {
-    if (!text.trim()) return;
+    if (!text.trim() || !activeThread) return;
 
     setError(null);
 
@@ -26,9 +104,7 @@ export function useChat() {
         text: usageLimitService.message,
         timestamp: new Date().toISOString(),
       };
-      const limitedMessages = [...messages, limitMessage];
-      setMessages(limitedMessages);
-      storageService.saveChats(limitedMessages);
+      updateActiveThreadMessages([...messages, limitMessage]);
       setError(usageLimitService.message);
       return;
     }
@@ -43,8 +119,7 @@ export function useChat() {
     };
 
     const updatedMessages = [...messages, userMessage];
-    setMessages(updatedMessages);
-    storageService.saveChats(updatedMessages);
+    updateActiveThreadMessages(updatedMessages);
     setLoading(true);
 
     try {
@@ -61,9 +136,7 @@ export function useChat() {
         timestamp: new Date().toISOString(),
       };
 
-      const finalMessages = [...updatedMessages, botMessage];
-      setMessages(finalMessages);
-      storageService.saveChats(finalMessages);
+      updateActiveThreadMessages([...updatedMessages, botMessage]);
     } catch (err: any) {
       console.error("AI Communication Error:", err);
       const message = err.message || "Something went wrong. Please check your internet connection and AI settings.";
@@ -72,33 +145,33 @@ export function useChat() {
       const errorMessageReply: ChatMessage = {
         id: `chat_${Date.now()}_err`,
         sender: "assistant",
-        text: `**AI service unavailable:** I could not reach the TediMed chat engine right now.
-
-${message.includes("API key") || message.includes("not configured") ? "*Please configure VITE_OPENAI_API_KEY for direct mobile chat, or VITE_API_BASE_URL for the TediMed API server.*" : ""}`,
+        text: `MediBot could not respond right now.\n\n${message}`,
         timestamp: new Date().toISOString(),
       };
 
-      const finalMessagesWithErr = [...updatedMessages, errorMessageReply];
-      setMessages(finalMessagesWithErr);
-      storageService.saveChats(finalMessagesWithErr);
+      updateActiveThreadMessages([...updatedMessages, errorMessageReply]);
     } finally {
       setLoading(false);
     }
   };
 
   const clearChat = () => {
-    setMessages([]);
-    storageService.saveChats([]);
+    updateActiveThreadMessages([]);
     setError(null);
   };
 
   return {
     messages,
+    threads,
+    activeThreadId,
     loading,
     error,
     useSavedRecords,
     setUseSavedRecords,
     sendMessage,
     clearChat,
+    createThread,
+    selectThread,
+    renameThread,
   };
 }

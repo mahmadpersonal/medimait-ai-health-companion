@@ -299,7 +299,7 @@ export function PillsPage({
           </div>
           <h3 className="font-extrabold text-slate-900 text-sm mb-1">No reminders yet</h3>
           <p className="text-[11px] text-slate-400 max-w-xs mx-auto leading-relaxed">
-            Tap the + button to add your first pill reminder, or scan a prescription and TediMed AI can generate reminders instantly!
+            Tap the + button to add your first pill reminder, or scan a prescription and MediMait AI can generate reminders instantly!
           </p>
         </div>
       )}

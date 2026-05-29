@@ -67,7 +67,7 @@ async function scanWithServer(base64Image: string): Promise<PrescriptionScanResu
 async function scanWithOpenAI(base64Image: string): Promise<PrescriptionScanResult> {
   if (!openAiKey) {
     throw new Error(
-      "AI prescription scanning is not configured. Add VITE_OPENAI_API_KEY for direct mobile OCR or VITE_API_BASE_URL for the TediMed API server."
+      "AI prescription scanning is not configured. Add VITE_OPENAI_API_KEY for direct mobile OCR or VITE_API_BASE_URL for the MediMait API server."
     );
   }
 
@@ -84,7 +84,7 @@ async function scanWithOpenAI(base64Image: string): Promise<PrescriptionScanResu
         {
           role: "system",
           content:
-            "You are TediMed's prescription OCR parser. Return only valid JSON with doctorName, clinicName, patientName, condition, and medicines. medicines must be an array of objects with name, dosage, timing, duration, instructions, purpose, sideEffects, precautions. Use empty strings when unreadable. Never invent medicines that are not visible.",
+            "You are MediMait's prescription OCR parser. Return only valid JSON with doctorName, clinicName, patientName, condition, and medicines. medicines must be an array of objects with name, dosage, timing, duration, instructions, purpose, sideEffects, precautions. Use empty strings when unreadable. Never invent medicines that are not visible.",
         },
         {
           role: "user",
@@ -120,7 +120,7 @@ async function scanWithOpenAI(base64Image: string): Promise<PrescriptionScanResu
 async function scanWithGemini(base64Image: string): Promise<PrescriptionScanResult> {
   if (!geminiKey) {
     throw new Error(
-      "Gemini prescription scanning is not configured. Add VITE_GEMINI_API_KEY for direct mobile OCR or VITE_API_BASE_URL for the TediMed API server."
+      "Gemini prescription scanning is not configured. Add VITE_GEMINI_API_KEY for direct mobile OCR or VITE_API_BASE_URL for the MediMait API server."
     );
   }
 
@@ -147,7 +147,7 @@ async function scanWithGemini(base64Image: string): Promise<PrescriptionScanResu
             parts: [
               {
                 text:
-                  "You are TediMed's prescription OCR parser. Read this prescription image carefully and return only valid JSON with doctorName, clinicName, patientName, condition, and medicines. medicines must be an array of objects with name, dosage, timing, duration, instructions, purpose, sideEffects, precautions. Use empty strings when unreadable. Never invent medicines that are not visible. Map timing to Morning, Afternoon, Evening, or Night when possible.",
+                  "You are MediMait's prescription OCR parser. Read this prescription image carefully and return only valid JSON with doctorName, clinicName, patientName, condition, and medicines. medicines must be an array of objects with name, dosage, timing, duration, instructions, purpose, sideEffects, precautions. Use empty strings when unreadable. Never invent medicines that are not visible. Map timing to Morning, Afternoon, Evening, or Night when possible.",
               },
               {
                 inlineData: {

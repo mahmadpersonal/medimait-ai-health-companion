@@ -6,7 +6,20 @@ export function useProfiles() {
   const [profiles, setProfiles] = useState<Profile[]>([]);
 
   useEffect(() => {
-    setProfiles(storageService.getProfiles());
+    const saved = storageService.getProfiles();
+    if (saved.some((profile) => profile.type === "Myself")) {
+      setProfiles(saved);
+      return;
+    }
+
+    const defaultProfile: Profile = {
+      id: "profile_myself",
+      name: "Myself",
+      type: "Myself",
+    };
+    const updated = [defaultProfile, ...saved];
+    setProfiles(updated);
+    storageService.saveProfiles(updated);
   }, []);
 
   const addProfile = (profileData: Omit<Profile, "id">) => {

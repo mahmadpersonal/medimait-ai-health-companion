@@ -1,8 +1,8 @@
-import React, { useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Camera as CameraIcon, Image as ImageIcon, Loader2, AlertCircle, Trash2, Edit2, Play, Save, Plus, Bell, Check, RotateCcw } from "lucide-react";
 import { Camera as CapacitorCamera, CameraResultType, CameraSource } from "@capacitor/camera";
 import { Capacitor } from "@capacitor/core";
-import { Medicine, PrescriptionScanResult, Profile, MedicalRecord, Reminder } from "../types";
+import { Medicine, PrescriptionScanResult, Profile, MedicalRecord, Reminder, ScanDraft } from "../types";
 import { aiVisionService } from "../services/aiVisionService";
 import { usageLimitService } from "../services/usageLimitService";
 
@@ -12,20 +12,20 @@ interface ScanPageProps {
   profiles: Profile[];
   setActiveTab: (tab: "scan" | "pills" | "files" | "chat" | "me") => void;
   pillsCount: number;
+  scanDraft: ScanDraft;
+  onScanDraftChange: React.Dispatch<React.SetStateAction<ScanDraft>>;
+  onNewScan: () => void;
 }
 
-export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, pillsCount }: ScanPageProps) {
-  const [image, setImage] = useState<string | null>(null);
-  const [pendingCameraImage, setPendingCameraImage] = useState<string | null>(null);
+export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, pillsCount, scanDraft, onScanDraftChange, onNewScan }: ScanPageProps) {
+  const { image, pendingCameraImage, scanResult, selectedProfileId, recordNotes, remindersSaved, recordSaved } = scanDraft;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [scanResult, setScanResult] = useState<PrescriptionScanResult | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [manualAddMode, setManualAddMode] = useState(false);
 
   // Form for manually adding or editing medicines
-  const [selectedProfileId, setSelectedProfileId] = useState<string>("");
   const [editingMedicineId, setEditingMedicineId] = useState<string | null>(null);
-  const [recordNotes, setRecordNotes] = useState<string>("");
 
   // Temp medicine state for adding/editing
   const [tempMedicine, setTempMedicine] = useState<Omit<Medicine, "id">>({
@@ -42,6 +42,17 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const dragRef = useRef<HTMLDivElement>(null);
+  const myselfProfileId = profiles.find((profile) => profile.type === "Myself")?.id || profiles[0]?.id || "";
+
+  const updateDraft = (patch: Partial<ScanDraft>) => {
+    onScanDraftChange((current) => ({ ...current, ...patch }));
+  };
+
+  useEffect(() => {
+    if (!selectedProfileId && myselfProfileId) {
+      updateDraft({ selectedProfileId: myselfProfileId });
+    }
+  }, [selectedProfileId, myselfProfileId]);
 
   // File change handler
   const handleCameraFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -66,11 +77,10 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
       if (event.target?.result) {
         const base64 = event.target.result as string;
         if (reviewBeforeScan) {
-          setPendingCameraImage(base64);
+          updateDraft({ pendingCameraImage: base64, scanResult: null, remindersSaved: false, recordSaved: false });
           setError(null);
-          setScanResult(null);
         } else {
-          setImage(base64);
+          updateDraft({ image: base64, scanResult: null, remindersSaved: false, recordSaved: false });
           handleScan(base64);
         }
       }
@@ -95,18 +105,19 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
   const handleScan = async (base64Img: string) => {
     if (!usageLimitService.canUse("prescriptionScans", 2)) {
       setError(usageLimitService.message);
-      setScanResult(null);
+      updateDraft({ scanResult: null });
       return;
     }
 
     usageLimitService.recordUse("prescriptionScans");
     setLoading(true);
     setError(null);
-    setScanResult(null);
+    setNotice(null);
+    updateDraft({ scanResult: null, remindersSaved: false, recordSaved: false });
 
     try {
       const result = await aiVisionService.scanPrescriptionImage(base64Img);
-      setScanResult(result);
+      updateDraft({ scanResult: result });
     } catch (err: any) {
       console.error(err);
       setError(
@@ -131,9 +142,8 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
           promptLabelPicture: "Take photo",
         });
         if (photo.dataUrl) {
-          setPendingCameraImage(photo.dataUrl);
+          updateDraft({ pendingCameraImage: photo.dataUrl, scanResult: null, remindersSaved: false, recordSaved: false });
           setError(null);
-          setScanResult(null);
         }
       } catch (err: any) {
         if (!String(err?.message || "").toLowerCase().includes("cancel")) {
@@ -156,7 +166,7 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
           source: CameraSource.Photos,
         });
         if (photo.dataUrl) {
-          setImage(photo.dataUrl);
+          updateDraft({ image: photo.dataUrl, scanResult: null, remindersSaved: false, recordSaved: false });
           handleScan(photo.dataUrl);
         }
       } catch (err: any) {
@@ -172,13 +182,12 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
 
   const acceptCameraImage = () => {
     if (!pendingCameraImage) return;
-    setImage(pendingCameraImage);
-    setPendingCameraImage(null);
+    updateDraft({ image: pendingCameraImage, pendingCameraImage: null });
     handleScan(pendingCameraImage);
   };
 
   const retakeCameraImage = () => {
-    setPendingCameraImage(null);
+    updateDraft({ pendingCameraImage: null });
     triggerCamera();
   };
 
@@ -202,20 +211,14 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
     const updatedMedicines = scanResult.medicines.map((m) =>
       m.id === editingMedicineId ? { ...m, ...tempMedicine } : m
     );
-    setScanResult({
-      ...scanResult,
-      medicines: updatedMedicines,
-    });
+    updateDraft({ scanResult: { ...scanResult, medicines: updatedMedicines } });
     setEditingMedicineId(null);
   };
 
   const handleDeleteMedicine = (medId: string) => {
     if (!scanResult) return;
     const updated = scanResult.medicines.filter((m) => m.id !== medId);
-    setScanResult({
-      ...scanResult,
-      medicines: updated,
-    });
+    updateDraft({ scanResult: { ...scanResult, medicines: updated } });
   };
 
   // Manually add medicine option
@@ -226,15 +229,20 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
     };
 
     if (scanResult) {
-      setScanResult({
-        ...scanResult,
-        medicines: [...scanResult.medicines, newMed],
+      updateDraft({
+        scanResult: { ...scanResult, medicines: [...scanResult.medicines, newMed] },
+        remindersSaved: false,
+        recordSaved: false,
       });
     } else {
-      setScanResult({
-        id: `scan_manual_${Date.now()}`,
-        date: new Date().toISOString().split("T")[0],
-        medicines: [newMed],
+      updateDraft({
+        scanResult: {
+          id: `scan_manual_${Date.now()}`,
+          date: new Date().toISOString().split("T")[0],
+          medicines: [newMed],
+        },
+        remindersSaved: false,
+        recordSaved: false,
       });
     }
 
@@ -255,9 +263,13 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
   // Final Action: Save prescription metadata as medical record in FILES
   const handleSaveAsRecord = () => {
     if (!scanResult || scanResult.medicines.length === 0) return;
+    if (recordSaved) {
+      setNotice("This prescription is already saved to Files.");
+      return;
+    }
 
     // Default to first profile if exists, else "Unassigned"
-    const profileId = selectedProfileId || (profiles[0]?.id || "");
+    const profileId = selectedProfileId || myselfProfileId;
 
     const newRecord: Omit<MedicalRecord, "id"> = {
       title: scanResult.condition ? `Prescription - ${scanResult.condition}` : `Prescription scan ${scanResult.date}`,
@@ -271,19 +283,19 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
     };
 
     onAddRecord(newRecord);
-    alert(" Prescription saved to Files successfully!");
-    
-    // Clear and redirect to files
-    setScanResult(null);
-    setImage(null);
-    setActiveTab("files");
+    updateDraft({ recordSaved: true, selectedProfileId: profileId });
+    setNotice("Prescription saved to Files. Your scan is still active.");
   };
 
   // Final Action: Add scanned medicines directly to Pills Reminder
   const handleAddToPillsReminders = () => {
     if (!scanResult || scanResult.medicines.length === 0) return;
+    if (remindersSaved) {
+      setNotice("Pill reminders are already saved for this scan.");
+      return;
+    }
 
-    const profileId = selectedProfileId || (profiles[0]?.id || "");
+    const profileId = selectedProfileId || myselfProfileId;
 
     scanResult.medicines.forEach((med) => {
       // Determine appropriate timing group
@@ -303,14 +315,15 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
         time: group === "Morning" ? "08:00" : group === "Afternoon" ? "13:00" : group === "Evening" ? "18:00" : "21:00",
         timingGroup: group,
         frequency: "Daily",
+        daysOfWeek: [1, 2, 3, 4, 5, 6, 7],
         startDate: new Date().toISOString().split("T")[0],
         notes: `${med.instructions}. Purpose: ${med.purpose}`,
         patientProfileId: profileId,
       });
     });
 
-    alert(`💊 ${scanResult.medicines.length} medicines imported into Pills Reminders successfully!`);
-    setActiveTab("pills");
+    updateDraft({ remindersSaved: true, selectedProfileId: profileId });
+    setNotice(`${scanResult.medicines.length} pill reminder${scanResult.medicines.length === 1 ? "" : "s"} saved. Your scan is still active.`);
   };
 
   return (
@@ -318,23 +331,37 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
       <div className="flex justify-between items-center mb-1">
         <div>
           <span className="text-xs font-bold tracking-wider uppercase text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">
-            TediMed
+            MediMait
           </span>
           <h1 className="text-2xl font-extrabold text-slate-900 mt-2">Scan</h1>
           <p className="text-xs text-slate-500 font-medium">Read a prescription in seconds using smart OCR.</p>
         </div>
-        <button
-          onClick={() => setActiveTab("pills")}
-          className="relative w-10 h-10 rounded-full bg-white border border-slate-100 text-blue-600 flex items-center justify-center shadow-xs active:scale-95"
-          title="Pill reminders"
-        >
-          <Bell className="w-5 h-5" />
-          {pillsCount > 0 && (
-            <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center border border-white">
-              {pillsCount}
-            </span>
+        <div className="flex items-center gap-2">
+          {(scanResult || image || pendingCameraImage) && (
+            <button
+              onClick={() => {
+                onNewScan();
+                setError(null);
+                setNotice(null);
+              }}
+              className="h-10 px-3 rounded-full bg-slate-900 text-white text-[10px] font-bold shadow-xs active:scale-95"
+            >
+              New Scan
+            </button>
           )}
-        </button>
+          <button
+            onClick={() => setActiveTab("pills")}
+            className="relative w-10 h-10 rounded-full bg-white border border-slate-100 text-blue-600 flex items-center justify-center shadow-xs active:scale-95"
+            title="Pill reminders"
+          >
+            <Bell className="w-5 h-5" />
+            {pillsCount > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center border border-white">
+                {pillsCount}
+              </span>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Primary Scan Upload Box */}
@@ -418,7 +445,7 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
           <Loader2 className="w-10 h-10 text-blue-600 animate-spin stroke-[2.2]" />
           <h3 className="text-slate-900 font-bold text-sm mt-4">Analyzing Handwritings...</h3>
           <p className="text-xs text-slate-500 mt-1 max-w-xs leading-relaxed">
-            Please wait while TediMed AI extracts dosages, medicines, durations, and instructions from your photo.
+            Please wait while MediMait AI extracts dosages, medicines, durations, and instructions from your photo.
           </p>
         </div>
       )}
@@ -441,6 +468,13 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {notice && !loading && (
+        <div className="mt-4 bg-emerald-50 border border-emerald-100 text-emerald-800 rounded-2xl p-4 flex items-start gap-3">
+          <Check className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+          <p className="text-[11px] leading-relaxed font-semibold">{notice}</p>
         </div>
       )}
 
@@ -745,10 +779,9 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
             <label className="block text-[11px] text-slate-500 mb-2">Who is this prescription for?</label>
             <select
               value={selectedProfileId}
-              onChange={(e) => setSelectedProfileId(e.target.value)}
+              onChange={(e) => updateDraft({ selectedProfileId: e.target.value })}
               className="w-full text-xs border border-slate-200 rounded-xl p-2.5 bg-white focus:outline-none"
             >
-              <option value="">-- Assign to profile --</option>
               {profiles.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name} ({p.type})
@@ -766,18 +799,26 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
           <div className="mt-6 flex flex-col gap-3">
             <button
               onClick={handleAddToPillsReminders}
-              disabled={scanResult.medicines.length === 0}
-              className="w-full bg-slate-900 hover:bg-slate-850 text-white font-bold text-xs py-3.5 px-4 rounded-2xl flex items-center justify-center gap-2 shadow-sm cursor-pointer disabled:opacity-50"
+              disabled={scanResult.medicines.length === 0 || remindersSaved}
+              title={remindersSaved ? "Pill reminders already saved for this scan" : "Set pill reminders"}
+              className={`w-full font-bold text-xs py-3.5 px-4 rounded-2xl flex items-center justify-center gap-2 shadow-sm cursor-pointer disabled:cursor-not-allowed ${
+                remindersSaved ? "bg-slate-200 text-slate-500" : "bg-slate-900 hover:bg-slate-800 text-white disabled:opacity-50"
+              }`}
             >
-              <Play className="w-4 h-4 text-emerald-400 stroke-[3]" /> Set Pile Reminders ({scanResult.medicines.length})
+              <Play className={`w-4 h-4 stroke-[3] ${remindersSaved ? "text-slate-400" : "text-emerald-400"}`} />
+              {remindersSaved ? "Pill Reminders Saved" : `Set Pill Reminders (${scanResult.medicines.length})`}
             </button>
 
             <button
               onClick={handleSaveAsRecord}
-              disabled={scanResult.medicines.length === 0}
-              className="w-full bg-blue-620 hover:bg-blue-700 text-white font-bold text-xs py-3.5 px-4 rounded-2xl flex items-center justify-center gap-2 shadow-sm cursor-pointer disabled:opacity-50"
+              disabled={scanResult.medicines.length === 0 || recordSaved}
+              title={recordSaved ? "Prescription already saved to Files" : "Save prescription to Files"}
+              className={`w-full font-bold text-xs py-3.5 px-4 rounded-2xl flex items-center justify-center gap-2 shadow-sm cursor-pointer disabled:cursor-not-allowed ${
+                recordSaved ? "bg-slate-200 text-slate-500" : "bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
+              }`}
             >
-              <Save className="w-4 h-4 stroke-[2]" /> Save to Files / Records
+              <Save className="w-4 h-4 stroke-[2]" />
+              {recordSaved ? "Saved to Files" : "Save to Files / Records"}
             </button>
           </div>
         </div>

@@ -12,6 +12,9 @@ export function useReminders() {
       daysOfWeek: reminder.daysOfWeek?.length ? reminder.daysOfWeek : ([1, 2, 3, 4, 5, 6, 7] as WeekdayNumber[]),
     }));
     setReminders(saved);
+    saved.forEach((reminder) => {
+      void notificationService.schedulePillReminder(reminder);
+    });
   }, []);
 
   const getTodayStr = () => {
@@ -49,6 +52,11 @@ export function useReminders() {
     const updated = reminders.map((r) => (r.id === id ? { ...r, ...updatedData } : r));
     setReminders(updated);
     storageService.saveReminders(updated);
+    const reminder = updated.find((r) => r.id === id);
+    if (reminder) {
+      void notificationService.cancelNotifications(reminder.notificationIds);
+      void notificationService.schedulePillReminder(reminder);
+    }
   };
 
   const deleteReminder = (id: string) => {
