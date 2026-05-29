@@ -8,13 +8,12 @@ interface ChatPageProps {
   activeThreadId: string;
   loading: boolean;
   error: string | null;
-  useSavedRecords: boolean;
-  onSetUseSavedRecords: (enabled: boolean) => void;
   onSendMessage: (text: string, contextData?: any) => Promise<void>;
   onClearChat: () => void;
   onCreateThread: () => boolean;
   onSelectThread: (id: string) => void;
   onRenameThread: (id: string, title: string) => void;
+  onDeleteThread: (id: string) => void;
   profiles: Profile[];
   reminders: Reminder[];
   records: MedicalRecord[];
@@ -55,13 +54,12 @@ export function ChatPage({
   activeThreadId,
   loading,
   error,
-  useSavedRecords,
-  onSetUseSavedRecords,
   onSendMessage,
   onClearChat,
   onCreateThread,
   onSelectThread,
   onRenameThread,
+  onDeleteThread,
   profiles,
   reminders,
   records,
@@ -93,13 +91,30 @@ export function ChatPage({
       time: r.time,
       daysOfWeek: r.daysOfWeek,
     })),
-    pastPrescriptionFilesCount: records.length,
+    savedFiles: records.map((record) => ({
+      title: record.title,
+      doctorName: record.doctorName,
+      clinicHospital: record.clinicHospital,
+      date: record.date,
+      patientProfileId: record.patientProfileId,
+      notes: record.notes,
+      medicines: record.medicines?.map((medicine) => ({
+        name: medicine.name,
+        dosage: medicine.dosage,
+        timing: medicine.timing,
+        duration: medicine.duration,
+        instructions: medicine.instructions,
+        purpose: medicine.purpose,
+        sideEffects: medicine.sideEffects,
+        precautions: medicine.precautions,
+      })),
+    })),
   });
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputText.trim() || loading) return;
-    onSendMessage(inputText.trim(), useSavedRecords ? buildContextPayload() : undefined);
+    onSendMessage(inputText.trim(), buildContextPayload());
     setInputText("");
   };
 
@@ -123,6 +138,14 @@ export function ChatPage({
     setRenameText("");
   };
 
+  const handleDeleteThread = (thread: ChatThread) => {
+    const shouldDelete = thread.messages.length === 0 || confirm(`Delete "${thread.title}"?`);
+    if (!shouldDelete) return;
+    onDeleteThread(thread.id);
+    setRenamingId(null);
+    setRenameText("");
+  };
+
   const quickQuestions = [
     "I have fever and body pain. What should I watch for?",
     "Can you explain my saved medicines in simple words?",
@@ -138,16 +161,6 @@ export function ChatPage({
             <p className="text-[10px] text-slate-400 font-medium">Clear medicine and symptom guidance.</p>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => onSetUseSavedRecords(!useSavedRecords)}
-              className={`h-8 px-2.5 rounded-full text-[10px] font-extrabold border transition-colors ${
-                useSavedRecords
-                  ? "bg-blue-600 text-white border-blue-600"
-                  : "bg-white text-slate-600 border-slate-200"
-              }`}
-            >
-              Records {useSavedRecords ? "On" : "Off"}
-            </button>
             {messages.length > 0 && (
               <button
                 onClick={onClearChat}
@@ -188,6 +201,9 @@ export function ChatPage({
                     </button>
                     <button onClick={() => startRename(thread)} className="p-1 opacity-80" title="Rename chat">
                       <Pencil className="w-3 h-3" />
+                    </button>
+                    <button onClick={() => handleDeleteThread(thread)} className="p-1 opacity-80" title="Delete chat">
+                      <Trash2 className="w-3 h-3" />
                     </button>
                   </>
                 )}

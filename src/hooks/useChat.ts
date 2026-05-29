@@ -25,7 +25,6 @@ export function useChat() {
   const [activeThreadId, setActiveThreadId] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [useSavedRecords, setUseSavedRecords] = useState(false);
 
   useEffect(() => {
     const savedThreads = storageService.getChatThreads();
@@ -80,6 +79,17 @@ export function useChat() {
     );
   };
 
+  const deleteThread = (id: string) => {
+    const remainingThreads = threads.filter((thread) => thread.id !== id);
+    const nextThreads = remainingThreads.length ? remainingThreads : [makeThread("New chat")];
+    const nextActiveId = activeThreadId === id ? nextThreads[0].id : activeThreadId;
+
+    persistThreads(nextThreads);
+    setActiveThreadId(nextActiveId);
+    storageService.saveActiveChatThreadId(nextActiveId);
+    setError(null);
+  };
+
   const updateActiveThreadMessages = (nextMessages: ChatMessage[]) => {
     const now = new Date().toISOString();
     const nextThreads = threads.map((thread) => {
@@ -125,7 +135,7 @@ export function useChat() {
     try {
       const assistantReply = await chatService.sendMessage(
         updatedMessages,
-        useSavedRecords,
+        true,
         contextData
       );
 
@@ -166,12 +176,11 @@ export function useChat() {
     activeThreadId,
     loading,
     error,
-    useSavedRecords,
-    setUseSavedRecords,
     sendMessage,
     clearChat,
     createThread,
     selectThread,
     renameThread,
+    deleteThread,
   };
 }

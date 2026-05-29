@@ -337,18 +337,6 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
           <p className="text-xs text-slate-500 font-medium">Read a prescription in seconds using smart OCR.</p>
         </div>
         <div className="flex items-center gap-2">
-          {(scanResult || image || pendingCameraImage) && (
-            <button
-              onClick={() => {
-                onNewScan();
-                setError(null);
-                setNotice(null);
-              }}
-              className="h-10 px-3 rounded-full bg-slate-900 text-white text-[10px] font-bold shadow-xs active:scale-95"
-            >
-              New Scan
-            </button>
-          )}
           <button
             onClick={() => setActiveTab("pills")}
             className="relative w-10 h-10 rounded-full bg-white border border-slate-100 text-blue-600 flex items-center justify-center shadow-xs active:scale-95"
@@ -418,6 +406,20 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
           />
         </div>
       </div>
+
+      {(scanResult || image || pendingCameraImage) && (
+        <button
+          onClick={() => {
+            onNewScan();
+            setError(null);
+            setNotice(null);
+          }}
+          className="mt-4 w-full bg-white border border-blue-100 text-blue-700 rounded-2xl py-3 px-4 flex items-center justify-center gap-2 text-xs font-extrabold shadow-sm active:scale-[0.99]"
+        >
+          <Plus className="w-4 h-4" />
+          Start New Scan
+        </button>
+      )}
 
       {pendingCameraImage && !loading && (
         <div className="mt-5 bg-white border border-slate-100 rounded-3xl overflow-hidden shadow-sm animate-fade-in">

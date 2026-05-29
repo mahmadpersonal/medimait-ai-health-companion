@@ -41,13 +41,12 @@ export default function App() {
     activeThreadId,
     loading,
     error,
-    useSavedRecords,
-    setUseSavedRecords,
     sendMessage,
     clearChat,
     createThread,
     selectThread,
     renameThread,
+    deleteThread,
   } = useChat();
 
   // Handle Bottom tab click
@@ -104,13 +103,12 @@ export default function App() {
             activeThreadId={activeThreadId}
             loading={loading}
             error={error}
-            useSavedRecords={useSavedRecords}
-            onSetUseSavedRecords={setUseSavedRecords}
             onSendMessage={sendMessage}
             onClearChat={clearChat}
             onCreateThread={createThread}
             onSelectThread={selectThread}
             onRenameThread={renameThread}
+            onDeleteThread={deleteThread}
             profiles={profiles}
             reminders={reminders}
             records={records}

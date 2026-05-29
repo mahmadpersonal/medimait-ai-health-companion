@@ -82,13 +82,13 @@ export function MePage({ profiles, onAddProfile, onUpdateProfile, onDeleteProfil
   const getProfileTheme = (pType: Profile["type"]) => {
     switch (pType) {
       case "Myself":
-        return { label: "Me", color: "bg-blue-50/80 hover:bg-blue-100 border-blue-100/70 text-blue-800" };
+        return { color: "bg-blue-50/80 hover:bg-blue-100 border-blue-100/70 text-blue-800" };
       case "Father":
-        return { label: "Dad", color: "bg-emerald-50/80 hover:bg-emerald-100 border-emerald-100/70 text-emerald-800" };
+        return { color: "bg-emerald-50/80 hover:bg-emerald-100 border-emerald-100/70 text-emerald-800" };
       case "Mother":
-        return { label: "Mom", color: "bg-amber-50/80 hover:bg-amber-100 border-amber-100/70 text-amber-800" };
+        return { color: "bg-amber-50/80 hover:bg-amber-100 border-amber-100/70 text-amber-800" };
       default:
-        return { label: "User", color: "bg-purple-50/80 hover:bg-purple-100 border-purple-100/70 text-purple-800" };
+        return { color: "bg-purple-50/80 hover:bg-purple-100 border-purple-100/70 text-purple-800" };
     }
   };
 
@@ -161,7 +161,6 @@ export function MePage({ profiles, onAddProfile, onUpdateProfile, onDeleteProfil
                   </div>
 
                   <div className="flex justify-between items-start pr-14">
-                    <span className="text-[11px] font-extrabold px-2.5 py-1 rounded-xl bg-white/70">{theme.label}</span>
                     <span className="text-[9.5px] uppercase tracking-wide px-2 py-0.5 rounded-md font-bold bg-white/60">
                       {profile.type}
                     </span>
@@ -202,7 +201,6 @@ export function MePage({ profiles, onAddProfile, onUpdateProfile, onDeleteProfil
                 className={`flex items-center justify-between p-4 rounded-3xl border text-left transition-transform active:scale-[0.97] ${theme.color}`}
               >
                 <div className="flex items-center gap-3">
-                  <span className="text-[11px] font-extrabold px-2 py-1 rounded-lg bg-white/70">{theme.label}</span>
                   <span className="text-xs font-bold text-slate-800">{role}</span>
                 </div>
                 <Plus className="w-4 h-4 text-slate-500" />
