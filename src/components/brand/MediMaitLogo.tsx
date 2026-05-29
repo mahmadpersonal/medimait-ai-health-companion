@@ -1,10 +1,10 @@
 import { HeartPulse, Pill } from "lucide-react";
 
-interface TediMedLogoProps {
+interface MediMaitLogoProps {
   className?: string;
 }
 
-export function TediMedLogo({ className = "w-8 h-8" }: TediMedLogoProps) {
+export function MediMaitLogo({ className = "w-8 h-8" }: MediMaitLogoProps) {
   return (
     <div className={`${className} bg-blue-600 rounded-xl flex items-center justify-center shadow-xs relative overflow-hidden`}>
       <HeartPulse className="w-[58%] h-[58%] text-white stroke-[2.4]" />

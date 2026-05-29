@@ -1,5 +1,5 @@
 import React from "react";
-import { TediMedLogo } from "../brand/TediMedLogo";
+import { MediMaitLogo } from "../brand/MediMaitLogo";
 
 interface PhoneWrapperProps {
   children: React.ReactNode;
@@ -19,7 +19,7 @@ export function PhoneWrapper({ children }: PhoneWrapperProps) {
         {/* Brand Header Bar */}
         <div className="h-[calc(3.5rem+env(safe-area-inset-top))] pt-[env(safe-area-inset-top)] w-full px-5 flex justify-between items-center z-45 backdrop-blur-md sticky top-0 shrink-0 border-b bg-white/95 border-slate-100/80 text-slate-800">
           <div className="flex items-center gap-2">
-            <TediMedLogo />
+            <MediMaitLogo />
             <span className="font-extrabold text-[15px] tracking-tight">MediMait</span>
           </div>
         </div>
