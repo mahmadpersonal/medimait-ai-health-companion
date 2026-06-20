@@ -1,8 +1,8 @@
 import React, { useEffect, useState, useRef } from "react";
-import { Camera as CameraIcon, Image as ImageIcon, Loader2, AlertCircle, Trash2, Edit2, Play, Save, Plus, Bell, Check, RotateCcw } from "lucide-react";
+import { Camera as CameraIcon, Image as ImageIcon, Loader2, AlertCircle, Trash2, Edit2, Play, Save, Plus, Bell, Check, RotateCcw, Eye, Download, ZoomIn, ZoomOut } from "lucide-react";
 import { Camera as CapacitorCamera, CameraResultType, CameraSource } from "@capacitor/camera";
 import { Capacitor } from "@capacitor/core";
-import { Medicine, PrescriptionScanResult, Profile, MedicalRecord, Reminder, ScanDraft } from "../types";
+import { AppSettings, Medicine, PrescriptionScanResult, Profile, MedicalRecord, Reminder, ScanDraft } from "../types";
 import { aiVisionService } from "../services/aiVisionService";
 import { usageLimitService } from "../services/usageLimitService";
 
@@ -15,14 +15,17 @@ interface ScanPageProps {
   scanDraft: ScanDraft;
   onScanDraftChange: React.Dispatch<React.SetStateAction<ScanDraft>>;
   onNewScan: () => void;
+  settings?: AppSettings;
 }
 
-export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, pillsCount, scanDraft, onScanDraftChange, onNewScan }: ScanPageProps) {
+export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, pillsCount, scanDraft, onScanDraftChange, onNewScan, settings }: ScanPageProps) {
   const { image, pendingCameraImage, scanResult, selectedProfileId, recordNotes, remindersSaved, recordSaved } = scanDraft;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [manualAddMode, setManualAddMode] = useState(false);
+  const [viewingImage, setViewingImage] = useState<string | null>(null);
+  const [imageScale, setImageScale] = useState(1);
 
   // Form for manually adding or editing medicines
   const [editingMedicineId, setEditingMedicineId] = useState<string | null>(null);
@@ -30,6 +33,7 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
   // Temp medicine state for adding/editing
   const [tempMedicine, setTempMedicine] = useState<Omit<Medicine, "id">>({
     name: "",
+    salt: "",
     dosage: "",
     timing: "Morning",
     duration: "5 days",
@@ -43,6 +47,8 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
   const galleryInputRef = useRef<HTMLInputElement>(null);
   const dragRef = useRef<HTMLDivElement>(null);
   const myselfProfileId = profiles.find((profile) => profile.type === "Myself")?.id || profiles[0]?.id || "";
+  const compactCards = settings?.compactMedicineCards;
+  const quietSafetyCopy = settings?.quietSafetyCopy;
 
   const updateDraft = (patch: Partial<ScanDraft>) => {
     onScanDraftChange((current) => ({ ...current, ...patch }));
@@ -196,6 +202,7 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
     setEditingMedicineId(med.id);
     setTempMedicine({
       name: med.name,
+      salt: med.salt || "",
       dosage: med.dosage,
       timing: med.timing,
       duration: med.duration,
@@ -250,6 +257,7 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
     // Reset form
     setTempMedicine({
       name: "",
+      salt: "",
       dosage: "",
       timing: "Morning",
       duration: "5 days",
@@ -317,13 +325,23 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
         frequency: "Daily",
         daysOfWeek: [1, 2, 3, 4, 5, 6, 7],
         startDate: new Date().toISOString().split("T")[0],
-        notes: `${med.instructions}. Purpose: ${med.purpose}`,
+        notes: `${med.salt ? `Salt: ${med.salt}. ` : ""}${med.instructions}. Purpose: ${med.purpose}`,
         patientProfileId: profileId,
       });
     });
 
     updateDraft({ remindersSaved: true, selectedProfileId: profileId });
     setNotice(`${scanResult.medicines.length} pill reminder${scanResult.medicines.length === 1 ? "" : "s"} saved. Your scan is still active.`);
+  };
+
+  const downloadImage = (source: string, filename = "medimait-prescription.png") => {
+    const link = document.createElement("a");
+    link.href = source;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setNotice("Prescription image download started.");
   };
 
   return (
@@ -488,6 +506,23 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
               <span className="absolute top-2.5 left-2.5 bg-slate-920/80 backdrop-blur-md text-white font-bold text-[9px] uppercase px-2.5 py-1 rounded-full">
                 Prescription Upload
               </span>
+              <div className="absolute bottom-2.5 right-2.5 flex gap-2">
+                <button
+                  onClick={() => {
+                    setImageScale(1);
+                    setViewingImage(image);
+                  }}
+                  className="bg-slate-900/80 text-white text-[9px] font-bold px-2.5 py-1.5 rounded-lg flex items-center gap-1"
+                >
+                  <Eye className="w-3 h-3" /> View
+                </button>
+                <button
+                  onClick={() => downloadImage(image)}
+                  className="bg-white/90 text-slate-800 text-[9px] font-bold px-2.5 py-1.5 rounded-lg flex items-center gap-1"
+                >
+                  <Download className="w-3 h-3" /> Save
+                </button>
+              </div>
               <img src={image} alt="Prescription snippet" className="w-full h-32 object-cover" />
             </div>
           )}
@@ -540,6 +575,17 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
                     type="text"
                     value={tempMedicine.name}
                     onChange={(e) => setTempMedicine({ ...tempMedicine, name: e.target.value })}
+                    className="w-full text-xs border border-slate-200 rounded-lg p-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10.5px] font-bold text-slate-500 mb-1">Salt / Generic Ingredient</label>
+                  <input
+                    type="text"
+                    value={tempMedicine.salt || ""}
+                    onChange={(e) => setTempMedicine({ ...tempMedicine, salt: e.target.value })}
+                    placeholder="e.g. Paracetamol, Amoxicillin"
                     className="w-full text-xs border border-slate-200 rounded-lg p-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
@@ -624,14 +670,19 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
             {scanResult.medicines.map((med) => (
               <div
                 key={med.id}
-                className="bg-white border border-slate-100 rounded-3xl p-4.5 shadow-xs relative overflow-hidden"
+                className={`bg-white border border-slate-100 rounded-3xl shadow-xs relative overflow-hidden ${
+                  compactCards ? "p-3.5" : "p-4.5"
+                }`}
               >
                 <div className="flex justify-between items-start gap-4">
                   <div>
                     <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 rounded-md">
-                      {med.dosage} · {med.timing}
+                      {med.dosage} / {med.timing}
                     </span>
                     <h4 className="text-base font-extrabold text-slate-900 mt-1.5">{med.name}</h4>
+                    <p className="text-[10.5px] text-slate-500 font-semibold mt-0.5">
+                      Salt: {med.salt || "Not detected"}
+                    </p>
                     <span className="text-[11px] text-slate-500 font-medium">Duration: {med.duration}</span>
                   </div>
 
@@ -706,6 +757,13 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
                   onChange={(e) => setTempMedicine({ ...tempMedicine, name: e.target.value })}
                   className="w-full text-xs border border-slate-250 bg-white rounded-lg p-2 focus:outline-none"
                 />
+                <input
+                  type="text"
+                  placeholder="Salt / generic ingredient"
+                  value={tempMedicine.salt || ""}
+                  onChange={(e) => setTempMedicine({ ...tempMedicine, salt: e.target.value })}
+                  className="w-full text-xs border border-slate-250 bg-white rounded-lg p-2 focus:outline-none"
+                />
                 <div className="grid grid-cols-2 gap-2">
                   <input
                     type="text"
@@ -770,8 +828,16 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
           <div className="mt-5 bg-amber-50 rounded-2xl p-4 border border-amber-100 flex gap-2.5">
             <AlertCircle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
             <p className="text-[10.5px] leading-relaxed text-amber-800">
-              <strong>Confirm with your doctor/pharmacist:</strong> Always verify medicine names, timing dosages,
-              and instructions before taking, changing, or stopping any prescription.
+              {quietSafetyCopy ? (
+                <>
+                  <strong>Check first:</strong> Verify medicines with your doctor or pharmacist.
+                </>
+              ) : (
+                <>
+                  <strong>Confirm with your doctor/pharmacist:</strong> Always verify medicine names, timing dosages,
+                  and instructions before taking, changing, or stopping any prescription.
+                </>
+              )}
             </p>
           </div>
 
@@ -841,6 +907,63 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
           </div>
         </div>
       )}
+
+      {viewingImage && (
+        <div className="absolute inset-0 bg-slate-950/95 z-60 flex flex-col">
+          <div className="h-14 px-4 flex items-center justify-between text-white border-b border-white/10">
+            <span className="text-xs font-extrabold">Prescription Image</span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setImageScale((value) => Math.max(1, value - 0.25))}
+                className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center"
+                title="Zoom out"
+              >
+                <ZoomOut className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setImageScale((value) => Math.min(4, value + 0.25))}
+                className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center"
+                title="Zoom in"
+              >
+                <ZoomIn className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setImageScale(1)}
+                className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center"
+                title="Reset zoom"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => downloadImage(viewingImage)}
+                className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center"
+                title="Save image"
+              >
+                <Download className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => {
+                  setViewingImage(null);
+                  setImageScale(1);
+                }}
+                className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center"
+                title="Close"
+              >
+                <span className="text-lg leading-none">x</span>
+              </button>
+            </div>
+          </div>
+          <div className="flex-1 overflow-auto flex items-center justify-center p-4">
+            <img
+              src={viewingImage}
+              alt="Prescription original"
+              className="max-w-none rounded-2xl transition-transform duration-150"
+              style={{ width: `${Math.round(imageScale * 100)}%` }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+

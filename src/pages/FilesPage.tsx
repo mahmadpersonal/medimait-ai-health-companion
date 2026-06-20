@@ -15,12 +15,16 @@ import {
   Trash, 
   Edit,
   Eye,
+  Download,
+  ZoomIn,
+  ZoomOut,
+  RotateCcw,
   UploadCloud, 
   CheckCircle, 
   Image as ImageIcon,
   AlertTriangle 
 } from "lucide-react";
-import { MedicalRecord, Profile, Reminder } from "../types";
+import { AppSettings, MedicalRecord, Profile, Reminder } from "../types";
 
 interface FilesPageProps {
   records: MedicalRecord[];
@@ -30,6 +34,7 @@ interface FilesPageProps {
   onAddReminder: (reminder: Omit<Reminder, "id" | "history">) => void;
   profiles: Profile[];
   setActiveTab: (tab: "scan" | "pills" | "files" | "chat" | "me") => void;
+  settings?: AppSettings;
 }
 
 export function FilesPage({
@@ -40,6 +45,7 @@ export function FilesPage({
   onAddReminder,
   profiles,
   setActiveTab,
+  settings,
 }: FilesPageProps) {
   // Filters & searches
   const [searchQuery, setSearchQuery] = useState("");
@@ -59,6 +65,9 @@ export function FilesPage({
   const [recordImage, setRecordImage] = useState<string | null>(null);
   const [editingRecord, setEditingRecord] = useState<MedicalRecord | null>(null);
   const [viewingImage, setViewingImage] = useState<string | null>(null);
+  const [imageScale, setImageScale] = useState(1);
+  const compactCards = settings?.compactMedicineCards;
+  const quietSafetyCopy = settings?.quietSafetyCopy;
 
   // Toast / Status notification in-UI state
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
@@ -68,6 +77,16 @@ export function FilesPage({
     setTimeout(() => {
       setActionSuccess(null);
     }, 4000);
+  };
+
+  const downloadImage = (source: string, filename = "medimait-prescription.png") => {
+    const link = document.createElement("a");
+    link.href = source;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast("Prescription image download started.");
   };
 
   const handleManualRecordSubmit = (e: React.FormEvent) => {
@@ -197,7 +216,7 @@ export function FilesPage({
         timingGroup: group,
         frequency: "Daily",
         startDate: new Date().toISOString().split("T")[0],
-        notes: `${med.instructions}. Purpose: ${med.purpose}`,
+        notes: `${med.salt ? `Salt: ${med.salt}. ` : ""}${med.instructions}. Purpose: ${med.purpose}`,
         patientProfileId: rec.patientProfileId,
       });
     });
@@ -549,10 +568,19 @@ export function FilesPage({
                     referrerPolicy="no-referrer"
                   />
                   <button
-                    onClick={() => setViewingImage(selectedRecord.prescriptionImage || null)}
+                    onClick={() => {
+                      setImageScale(1);
+                      setViewingImage(selectedRecord.prescriptionImage || null);
+                    }}
                     className="absolute bottom-2.5 right-2.5 bg-slate-900/80 hover:bg-slate-950/90 backdrop-blur-md text-[9.5px] font-bold text-white px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition-all"
                   >
                     <Eye className="w-3 h-3" /> View Original Image
+                  </button>
+                  <button
+                    onClick={() => downloadImage(selectedRecord.prescriptionImage || "")}
+                    className="absolute bottom-2.5 left-2.5 bg-white/90 hover:bg-white text-[9.5px] font-bold text-slate-800 px-2.5 py-1.5 rounded-lg flex items-center gap-1 transition-all"
+                  >
+                    <Download className="w-3 h-3" /> Save
                   </button>
                 </div>
               </div>
@@ -605,13 +633,14 @@ export function FilesPage({
 
                 <div className="space-y-3">
                   {selectedRecord.medicines.map((med, idx) => (
-                    <div key={idx} className="bg-slate-50 border border-slate-100 rounded-2xl p-3.5 text-xs">
+                    <div key={idx} className={`bg-slate-50 border border-slate-100 rounded-2xl text-xs ${compactCards ? "p-2.5" : "p-3.5"}`}>
                       <div className="flex justify-between font-bold text-slate-900">
                         <span>{med.name}</span>
                         <span className="text-blue-600 bg-blue-50 px-2 py-0.5 rounded text-[10px]">
                           {med.dosage}
                         </span>
                       </div>
+                      <p className="text-slate-500 text-[10px] mt-0.5 font-semibold">Salt: {med.salt || "Not detected"}</p>
                       <p className="text-slate-500 mt-1 leading-snug">{med.instructions}</p>
                       <p className="text-slate-450 text-[10px] mt-0.5">Simple Term: {med.purpose}</p>
                     </div>
@@ -622,7 +651,9 @@ export function FilesPage({
 
             {/* SAFETY WARNING */}
             <div className="mt-5 bg-amber-50 rounded-2xl p-3.5 text-[10px] leading-relaxed text-amber-800 border border-amber-100/70">
-              Disclaimer: Scanned medicinals content is parsed with AI OCR. Always discuss with professional doctors prior to modification.
+              {quietSafetyCopy
+                ? "AI OCR can make mistakes. Verify before use."
+                : "Disclaimer: Scanned medicinal content is parsed with AI OCR. Always discuss with professional doctors prior to modification."}
             </div>
 
             <div className="mt-6 grid grid-cols-2 gap-2.5">
@@ -649,17 +680,56 @@ export function FilesPage({
 
       {viewingImage && (
         <div className="absolute inset-0 bg-slate-950/90 z-60 flex flex-col">
-          <div className="h-14 px-4 flex items-center justify-between text-white">
+          <div className="h-14 px-4 flex items-center justify-between text-white border-b border-white/10">
             <span className="text-xs font-extrabold">Original Image</span>
-            <button
-              onClick={() => setViewingImage(null)}
-              className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center"
-            >
-              <X className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setImageScale((value) => Math.max(1, value - 0.25))}
+                className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center"
+                title="Zoom out"
+              >
+                <ZoomOut className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setImageScale((value) => Math.min(4, value + 0.25))}
+                className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center"
+                title="Zoom in"
+              >
+                <ZoomIn className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setImageScale(1)}
+                className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center"
+                title="Reset zoom"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => downloadImage(viewingImage)}
+                className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center"
+                title="Save image"
+              >
+                <Download className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => {
+                  setViewingImage(null);
+                  setImageScale(1);
+                }}
+                className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center"
+                title="Close"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
           <div className="flex-1 overflow-auto flex items-center justify-center p-4">
-            <img src={viewingImage} alt="Original record" className="max-w-full max-h-full object-contain rounded-2xl" />
+            <img
+              src={viewingImage}
+              alt="Original record"
+              className="max-w-none rounded-2xl transition-transform duration-150"
+              style={{ width: `${Math.round(imageScale * 100)}%` }}
+            />
           </div>
         </div>
       )}

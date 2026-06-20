@@ -1,4 +1,4 @@
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { PhoneWrapper } from "./components/layout/PhoneWrapper";
 import { BottomNavigation, NavTab } from "./components/layout/BottomNavigation";
 
@@ -14,7 +14,8 @@ import { useProfiles } from "./hooks/useProfiles";
 import { useReminders } from "./hooks/useReminders";
 import { useRecords } from "./hooks/useRecords";
 import { useChat } from "./hooks/useChat";
-import { ScanDraft } from "./types";
+import { AppSettings, ScanDraft } from "./types";
+import { defaultAppSettings, storageService } from "./services/storageService";
 
 const emptyScanDraft: ScanDraft = {
   image: null,
@@ -29,7 +30,12 @@ const emptyScanDraft: ScanDraft = {
 export default function App() {
   const [activeTab, setActiveTab] = useState<NavTab>("scan");
   const [scanDraft, setScanDraft] = useState<ScanDraft>(emptyScanDraft);
+  const [settings, setSettings] = useState<AppSettings>(() => storageService.getSettings());
   const [, startTransition] = useTransition();
+
+  useEffect(() => {
+    storageService.saveSettings(settings);
+  }, [settings]);
 
   // Custom persistent hooks
   const { profiles, addProfile, updateProfile, deleteProfile } = useProfiles();
@@ -70,6 +76,7 @@ export default function App() {
             scanDraft={scanDraft}
             onScanDraftChange={setScanDraft}
             onNewScan={() => setScanDraft(emptyScanDraft)}
+            settings={settings}
           />
         );
       case "pills":
@@ -93,6 +100,7 @@ export default function App() {
             onAddReminder={addReminder}
             profiles={profiles}
             setActiveTab={handleTabChange}
+            settings={settings}
           />
         );
       case "chat":
@@ -121,6 +129,9 @@ export default function App() {
             onAddProfile={addProfile}
             onUpdateProfile={updateProfile}
             onDeleteProfile={deleteProfile}
+            settings={settings}
+            onSettingsChange={(patch) => setSettings((current) => ({ ...current, ...patch }))}
+            onResetSettings={() => setSettings(defaultAppSettings)}
           />
         );
       default:
@@ -134,6 +145,7 @@ export default function App() {
             scanDraft={scanDraft}
             onScanDraftChange={setScanDraft}
             onNewScan={() => setScanDraft(emptyScanDraft)}
+            settings={settings}
           />
         );
     }
@@ -146,7 +158,12 @@ export default function App() {
   return (
     <PhoneWrapper>
       {/* Scrollable Viewport area */}
-      <div className="flex-1 overflow-hidden flex flex-col h-full relative bg-slate-50 text-slate-900">
+      <div
+        className={`flex-1 overflow-hidden flex flex-col h-full relative bg-slate-50 text-slate-900 ${
+          settings.largeText ? "text-[108%]" : ""
+        }`}
+        dir={settings.language === "ur" ? "rtl" : "ltr"}
+      >
         {renderActiveScreen()}
       </div>
 
@@ -155,6 +172,7 @@ export default function App() {
         activeTab={activeTab}
         onChangeTab={handleTabChange}
         pillsCount={activePillsCount}
+        language={settings.language}
       />
     </PhoneWrapper>
   );

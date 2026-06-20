@@ -1,4 +1,4 @@
-import { Profile, MedicalRecord, Reminder, ChatMessage, ChatThread } from "../types";
+import { Profile, MedicalRecord, Reminder, ChatMessage, ChatThread, AppSettings } from "../types";
 
 const KEYS = {
   PROFILES: "tedimed_profiles",
@@ -7,6 +7,14 @@ const KEYS = {
   CHATS: "tedimed_chats",
   CHAT_THREADS: "medimait_chat_threads",
   ACTIVE_CHAT_THREAD: "medimait_active_chat_thread",
+  SETTINGS: "medimait_app_settings",
+};
+
+export const defaultAppSettings: AppSettings = {
+  language: "en",
+  largeText: false,
+  compactMedicineCards: false,
+  quietSafetyCopy: false,
 };
 
 export const storageService = {
@@ -79,6 +87,21 @@ export const storageService = {
     localStorage.setItem(KEYS.ACTIVE_CHAT_THREAD, id);
   },
 
+  getSettings(): AppSettings {
+    const data = localStorage.getItem(KEYS.SETTINGS);
+    if (!data) return defaultAppSettings;
+
+    try {
+      return { ...defaultAppSettings, ...JSON.parse(data) };
+    } catch {
+      return defaultAppSettings;
+    }
+  },
+
+  saveSettings(settings: AppSettings): void {
+    localStorage.setItem(KEYS.SETTINGS, JSON.stringify(settings));
+  },
+
   // Utility to fully clear local memory for debugging/re-testing
   clearAll(): void {
     localStorage.removeItem(KEYS.PROFILES);
@@ -87,5 +110,6 @@ export const storageService = {
     localStorage.removeItem(KEYS.CHATS);
     localStorage.removeItem(KEYS.CHAT_THREADS);
     localStorage.removeItem(KEYS.ACTIVE_CHAT_THREAD);
+    localStorage.removeItem(KEYS.SETTINGS);
   },
 };

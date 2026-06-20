@@ -84,7 +84,7 @@ app.post("/api/scan-prescription", async (req, res) => {
     };
 
     const textPart = {
-      text: "You are an expert prescription OCR reader. Scan this prescription or medicine bottle and extract all details with extreme precision. Analyze handwriting, typescript, medicine names, dosages, durations, and instructions. For purpose, describe in simple, warm, everyday human-friendly terms what the medicine does (e.g. 'Reduces fever and body pain' or 'Relieves bloating and gas'). Map the medicine's timing to exact categories: Morning, Afternoon, Evening, or Night. If unsure, guess the most likely timing category based on instructions (e.g. 'take at bedtime' -> Night). For side effects and precautions, list mild everyday-understandable elements.",
+      text: "You are an expert prescription OCR reader. Scan this prescription or medicine bottle and extract all details with extreme precision. Analyze handwriting, typescript, medicine names, salts/generic ingredients, dosages, durations, and instructions. Extract every visible medicine or prescribed item, with no maximum count. For purpose, describe in simple, warm, everyday human-friendly terms what the medicine does (e.g. 'Reduces fever and body pain' or 'Relieves bloating and gas'). Map the medicine's timing to exact categories: Morning, Afternoon, Evening, or Night. If unsure, guess the most likely timing category based on instructions (e.g. 'take at bedtime' -> Night). For side effects and precautions, list mild everyday-understandable elements.",
     };
 
     const response = await ai.models.generateContent({
@@ -105,6 +105,7 @@ app.post("/api/scan-prescription", async (req, res) => {
                 type: Type.OBJECT,
                 properties: {
                   name: { type: Type.STRING, description: "Precise name of the medicine" },
+                  salt: { type: Type.STRING, description: "Generic ingredient, salt, or composition if visible or confidently inferable from the medicine name; otherwise empty" },
                   dosage: { type: Type.STRING, description: "Dosage detail, e.g. 500mg, 1 tablet, 5ml, 1 puff" },
                   timing: { type: Type.STRING, description: "Strictly ONE of: Morning, Afternoon, Evening, Night. Categorize based on instructions." },
                   duration: { type: Type.STRING, description: "Treatment duration, e.g., 5 days, 1 month, ongoing" },

@@ -1,18 +1,34 @@
-import React, { useState } from "react";
-import { Plus, User, Trash2, X, Pencil } from "lucide-react";
-import { Profile } from "../types";
+import React, { useEffect, useState } from "react";
+import { Plus, User, Trash2, X, Pencil, Languages, BellRing, ShieldCheck, Database, Server, RotateCcw, Type, LayoutList } from "lucide-react";
+import { AppSettings, Profile } from "../types";
+import { hasApiBaseUrl } from "../services/apiConfig";
+import { notificationService } from "../services/notificationService";
+import { storageService } from "../services/storageService";
 
 interface MePageProps {
   profiles: Profile[];
   onAddProfile: (profile: Omit<Profile, "id">) => Profile;
   onUpdateProfile: (id: string, profile: Partial<Profile>) => void;
   onDeleteProfile: (id: string) => void;
+  settings: AppSettings;
+  onSettingsChange: (patch: Partial<AppSettings>) => void;
+  onResetSettings: () => void;
 }
 
 const profileTypes = ["Myself", "Father", "Mother", "Other"] as const;
 
-export function MePage({ profiles, onAddProfile, onUpdateProfile, onDeleteProfile }: MePageProps) {
+export function MePage({
+  profiles,
+  onAddProfile,
+  onUpdateProfile,
+  onDeleteProfile,
+  settings,
+  onSettingsChange,
+  onResetSettings,
+}: MePageProps) {
   const [showModal, setShowModal] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [notificationGranted, setNotificationGranted] = useState<boolean | null>(null);
   const [editingProfileId, setEditingProfileId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [type, setType] = useState<Profile["type"]>("Myself");
@@ -29,6 +45,27 @@ export function MePage({ profiles, onAddProfile, onUpdateProfile, onDeleteProfil
     setGender("");
     setAllergies("");
     setConditions("");
+  };
+
+  useEffect(() => {
+    void notificationService.hasPermission().then(setNotificationGranted).catch(() => setNotificationGranted(false));
+  }, []);
+
+  const showNotice = (message: string) => {
+    setNotice(message);
+    window.setTimeout(() => setNotice(null), 3500);
+  };
+
+  const requestNotifications = async () => {
+    const granted = await notificationService.requestPermission();
+    setNotificationGranted(granted);
+    showNotice(granted ? "Pill reminder notifications are enabled." : "Notification permission was not granted.");
+  };
+
+  const resetLocalData = () => {
+    if (!window.confirm("Clear profiles, files, reminders, and chats from this phone?")) return;
+    storageService.clearAll();
+    window.location.reload();
   };
 
   const openCreate = (presetType: Profile["type"] = "Myself", presetName = "") => {
@@ -94,6 +131,12 @@ export function MePage({ profiles, onAddProfile, onUpdateProfile, onDeleteProfil
 
   return (
     <div className="flex-1 overflow-y-auto px-5 pt-4 pb-20 select-none">
+      {notice && (
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-60 w-[88%] max-w-[360px] bg-slate-900/95 text-white py-3 px-4 rounded-2xl shadow-2xl">
+          <p className="text-[11px] font-bold leading-relaxed">{notice}</p>
+        </div>
+      )}
+
       <h1 className="text-2xl font-extrabold text-slate-900">Me</h1>
       <p className="text-xs text-slate-500 font-medium">Set personal metrics and family medical profiles.</p>
 
@@ -207,6 +250,164 @@ export function MePage({ profiles, onAddProfile, onUpdateProfile, onDeleteProfil
               </button>
             );
           })}
+        </div>
+      </div>
+
+      <div className="mt-8 space-y-4">
+        <div>
+          <h3 className="text-[11px] font-extrabold text-slate-400 tracking-wider uppercase mb-3 text-left">
+            Settings
+          </h3>
+
+          <div className="bg-white border border-slate-100 rounded-3xl p-4 shadow-xs">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                <Languages className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="text-sm font-extrabold text-slate-900">Language</h4>
+                <p className="text-[10.5px] text-slate-500">Choose the app reading direction and labels.</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2 rounded-2xl bg-slate-100 p-1">
+              <button
+                onClick={() => onSettingsChange({ language: "en" })}
+                className={`py-2.5 rounded-xl text-xs font-extrabold transition-all ${
+                  settings.language === "en" ? "bg-white text-blue-700 shadow-xs" : "text-slate-500"
+                }`}
+              >
+                English
+              </button>
+              <button
+                onClick={() => onSettingsChange({ language: "ur" })}
+                className={`py-2.5 rounded-xl text-xs font-extrabold transition-all ${
+                  settings.language === "ur" ? "bg-white text-blue-700 shadow-xs" : "text-slate-500"
+                }`}
+              >
+                اردو
+              </button>
+            </div>
+            <p className="text-[10px] text-slate-400 mt-2 leading-relaxed">
+              Urdu mode applies right-to-left layout now. Full medical copy translation can be expanded safely screen by screen.
+            </p>
+          </div>
+        </div>
+
+        <div className="bg-white border border-slate-100 rounded-3xl p-4 shadow-xs space-y-3">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                <BellRing className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="text-sm font-extrabold text-slate-900">Pill Notifications</h4>
+                <p className="text-[10.5px] text-slate-500">
+                  {notificationGranted ? "Enabled on this device" : "Permission needed for reminders"}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={requestNotifications}
+              className="bg-slate-900 text-white text-[10px] font-extrabold px-3 py-2 rounded-xl"
+            >
+              Check
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-slate-50 text-slate-600 flex items-center justify-center">
+                <Server className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="text-sm font-extrabold text-slate-900">AI Backend</h4>
+                <p className="text-[10.5px] text-slate-500">
+                  {hasApiBaseUrl() ? "Cloudflare API connected" : "Direct mobile AI fallback"}
+                </p>
+              </div>
+            </div>
+            <span className={`text-[9.5px] font-extrabold px-2.5 py-1 rounded-full ${
+              hasApiBaseUrl() ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+            }`}>
+              {hasApiBaseUrl() ? "ONLINE" : "LOCAL"}
+            </span>
+          </div>
+        </div>
+
+        <div className="bg-white border border-slate-100 rounded-3xl p-4 shadow-xs space-y-3">
+          {[
+            {
+              label: "Larger text",
+              help: "Slightly increases app text size.",
+              icon: Type,
+              checked: settings.largeText,
+              key: "largeText" as const,
+            },
+            {
+              label: "Compact medicine cards",
+              help: "Shows medicine lists with tighter spacing.",
+              icon: LayoutList,
+              checked: settings.compactMedicineCards,
+              key: "compactMedicineCards" as const,
+            },
+            {
+              label: "Short safety notes",
+              help: "Keeps reminders and scan warnings quieter.",
+              icon: ShieldCheck,
+              checked: settings.quietSafetyCopy,
+              key: "quietSafetyCopy" as const,
+            },
+          ].map((item) => {
+            const Icon = item.icon;
+            return (
+              <label key={item.key} className="flex items-center justify-between gap-3 border-b last:border-b-0 border-slate-100 pb-3 last:pb-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-slate-50 text-slate-600 flex items-center justify-center">
+                    <Icon className="w-4.5 h-4.5" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-extrabold text-slate-900">{item.label}</p>
+                    <p className="text-[10px] text-slate-500">{item.help}</p>
+                  </div>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={item.checked}
+                  onChange={(e) => onSettingsChange({ [item.key]: e.target.checked })}
+                  className="w-5 h-5 accent-blue-600"
+                />
+              </label>
+            );
+          })}
+        </div>
+
+        <div className="bg-white border border-slate-100 rounded-3xl p-4 shadow-xs">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-2xl bg-red-50 text-red-600 flex items-center justify-center">
+              <Database className="w-5 h-5" />
+            </div>
+            <div>
+              <h4 className="text-sm font-extrabold text-slate-900">Privacy & Data</h4>
+              <p className="text-[10.5px] text-slate-500">Profiles, scans, chats, and pills stay on this phone.</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => {
+                onResetSettings();
+                showNotice("Settings restored to default.");
+              }}
+              className="bg-slate-100 text-slate-700 text-[10.5px] font-extrabold py-2.5 rounded-xl flex items-center justify-center gap-1.5"
+            >
+              <RotateCcw className="w-3.5 h-3.5" /> Reset Settings
+            </button>
+            <button
+              onClick={resetLocalData}
+              className="bg-red-50 text-red-700 text-[10.5px] font-extrabold py-2.5 rounded-xl flex items-center justify-center gap-1.5"
+            >
+              <Trash2 className="w-3.5 h-3.5" /> Clear Data
+            </button>
+          </div>
         </div>
       </div>
 

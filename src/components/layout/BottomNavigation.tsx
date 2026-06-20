@@ -7,15 +7,34 @@ interface BottomNavigationProps {
   onChangeTab: (tab: NavTab) => void;
   // Badges count, e.g. active pills setup
   pillsCount?: number;
+  language?: "en" | "ur";
 }
 
-export function BottomNavigation({ activeTab, onChangeTab, pillsCount = 0 }: BottomNavigationProps) {
+const labels = {
+  en: {
+    scan: "Scan",
+    pills: "Pills",
+    files: "Files",
+    chat: "Chat",
+    me: "Me",
+  },
+  ur: {
+    scan: "اسکین",
+    pills: "دوائیں",
+    files: "فائلیں",
+    chat: "چیٹ",
+    me: "میں",
+  },
+};
+
+export function BottomNavigation({ activeTab, onChangeTab, pillsCount = 0, language = "en" }: BottomNavigationProps) {
+  const tabLabels = labels[language];
   const tabs = [
-    { id: "scan" as NavTab, label: "Scan", icon: Scan },
-    { id: "pills" as NavTab, label: "Pills", icon: Pill, badge: pillsCount },
-    { id: "files" as NavTab, label: "Files", icon: FileText },
-    { id: "chat" as NavTab, label: "Chat", icon: MessageSquare },
-    { id: "me" as NavTab, label: "Me", icon: User },
+    { id: "scan" as NavTab, label: tabLabels.scan, icon: Scan },
+    { id: "pills" as NavTab, label: tabLabels.pills, icon: Pill, badge: pillsCount },
+    { id: "files" as NavTab, label: tabLabels.files, icon: FileText },
+    { id: "chat" as NavTab, label: tabLabels.chat, icon: MessageSquare },
+    { id: "me" as NavTab, label: tabLabels.me, icon: User },
   ];
 
   return (

@@ -11,6 +11,7 @@ export interface Profile {
 export interface Medicine {
   id: string;
   name: string;
+  salt?: string;
   dosage: string;
   timing: 'Morning' | 'Afternoon' | 'Evening' | 'Night' | string;
   duration: string;
@@ -83,4 +84,13 @@ export interface ScanDraft {
   recordNotes: string;
   remindersSaved: boolean;
   recordSaved: boolean;
+}
+
+export type AppLanguage = "en" | "ur";
+
+export interface AppSettings {
+  language: AppLanguage;
+  largeText: boolean;
+  compactMedicineCards: boolean;
+  quietSafetyCopy: boolean;
 }

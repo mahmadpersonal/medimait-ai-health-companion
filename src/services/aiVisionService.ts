@@ -8,6 +8,7 @@ export interface ScanResponse {
   condition?: string;
   medicines: Array<{
     name: string;
+    salt?: string;
     dosage: string;
     timing: string;
     duration: string;
@@ -27,6 +28,7 @@ function toPrescriptionResult(data: ScanResponse): PrescriptionScanResult {
   const medicines = (data.medicines || []).map((m, idx) => ({
     id: `med_${Date.now()}_${idx}`,
     name: m.name || "",
+    salt: m.salt || "",
     dosage: m.dosage || "",
     timing: m.timing || "Morning",
     duration: m.duration || "",
@@ -84,7 +86,7 @@ async function scanWithOpenAI(base64Image: string): Promise<PrescriptionScanResu
         {
           role: "system",
           content:
-            "You are MediMait's prescription OCR parser. Return only valid JSON with doctorName, clinicName, patientName, condition, and medicines. medicines must be an array of objects with name, dosage, timing, duration, instructions, purpose, sideEffects, precautions. Use empty strings when unreadable. Never invent medicines that are not visible.",
+            "You are MediMait's prescription OCR parser. Return only valid JSON with doctorName, clinicName, patientName, condition, and medicines. medicines must be an array of objects with name, salt, dosage, timing, duration, instructions, purpose, sideEffects, precautions. name is the visible brand/medicine name. salt is the generic ingredient/composition if visible or confidently inferable from the medicine name; otherwise empty. Extract every visible medicine or prescribed item, with no maximum count. Use empty strings when unreadable. Never invent medicines that are not visible.",
         },
         {
           role: "user",
@@ -92,7 +94,7 @@ async function scanWithOpenAI(base64Image: string): Promise<PrescriptionScanResu
             {
               type: "text",
               text:
-                "Read this prescription image carefully. Extract only visible prescription details. Map timing to Morning, Afternoon, Evening, or Night when possible.",
+                "Read this prescription image carefully. Extract all visible prescription details and every visible medicine row/item. Map timing to Morning, Afternoon, Evening, or Night when possible.",
             },
             {
               type: "image_url",
@@ -147,7 +149,7 @@ async function scanWithGemini(base64Image: string): Promise<PrescriptionScanResu
             parts: [
               {
                 text:
-                  "You are MediMait's prescription OCR parser. Read this prescription image carefully and return only valid JSON with doctorName, clinicName, patientName, condition, and medicines. medicines must be an array of objects with name, dosage, timing, duration, instructions, purpose, sideEffects, precautions. Use empty strings when unreadable. Never invent medicines that are not visible. Map timing to Morning, Afternoon, Evening, or Night when possible.",
+                  "You are MediMait's prescription OCR parser. Read this prescription image carefully and return only valid JSON with doctorName, clinicName, patientName, condition, and medicines. medicines must be an array of objects with name, salt, dosage, timing, duration, instructions, purpose, sideEffects, precautions. name is the visible brand/medicine name. salt is the generic ingredient/composition if visible or confidently inferable from the medicine name; otherwise empty. Extract every visible medicine or prescribed item, with no maximum count. Use empty strings when unreadable. Never invent medicines that are not visible. Map timing to Morning, Afternoon, Evening, or Night when possible.",
               },
               {
                 inlineData: {
@@ -173,6 +175,7 @@ async function scanWithGemini(base64Image: string): Promise<PrescriptionScanResu
                   type: "OBJECT",
                   properties: {
                     name: { type: "STRING" },
+                    salt: { type: "STRING" },
                     dosage: { type: "STRING" },
                     timing: { type: "STRING" },
                     duration: { type: "STRING" },
