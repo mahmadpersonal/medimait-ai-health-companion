@@ -19,11 +19,11 @@ const labels = {
     me: "Me",
   },
   ur: {
-    scan: "اسکین",
-    pills: "دوائیں",
-    files: "فائلیں",
-    chat: "چیٹ",
-    me: "میں",
+    scan: "\u0627\u0633\u06a9\u06cc\u0646",
+    pills: "\u062f\u0648\u0627\u0626\u06cc\u06ba",
+    files: "\u0641\u0627\u0626\u0644\u06cc\u06ba",
+    chat: "\u0686\u06cc\u0679",
+    me: "\u0645\u06cc\u06ba",
   },
 };
 

@@ -19,13 +19,29 @@ export interface ScanResponse {
   }>;
 }
 
+function normalizeScanData(data: ScanResponse | ScanResponse["medicines"] | any): ScanResponse {
+  if (Array.isArray(data)) {
+    return { medicines: data };
+  }
+
+  if (data && !Array.isArray(data.medicines) && data.name) {
+    return { medicines: [data] };
+  }
+
+  return {
+    ...data,
+    medicines: Array.isArray(data?.medicines) ? data.medicines : [],
+  };
+}
+
 const openAiKey = import.meta.env.VITE_OPENAI_API_KEY || "";
 const openAiVisionModel = import.meta.env.VITE_OPENAI_VISION_MODEL || "gpt-4o-mini";
 const geminiKey = import.meta.env.VITE_GEMINI_API_KEY || "";
 const geminiVisionModel = import.meta.env.VITE_GEMINI_VISION_MODEL || "gemini-2.5-flash-lite";
 
 function toPrescriptionResult(data: ScanResponse): PrescriptionScanResult {
-  const medicines = (data.medicines || []).map((m, idx) => ({
+  const normalized = normalizeScanData(data);
+  const medicines = (normalized.medicines || []).map((m, idx) => ({
     id: `med_${Date.now()}_${idx}`,
     name: m.name || "",
     salt: m.salt || "",
@@ -41,10 +57,10 @@ function toPrescriptionResult(data: ScanResponse): PrescriptionScanResult {
   return {
     id: `scan_${Date.now()}`,
     date: new Date().toISOString().split("T")[0],
-    doctorName: data.doctorName || "",
-    clinicName: data.clinicName || "",
-    patientName: data.patientName || "",
-    condition: data.condition || "",
+    doctorName: normalized.doctorName || "",
+    clinicName: normalized.clinicName || "",
+    patientName: normalized.patientName || "",
+    condition: normalized.condition || "",
     medicines,
   };
 }

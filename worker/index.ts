@@ -54,6 +54,21 @@ function normalizeGeminiJson(text: string) {
   return fenced ? fenced[1].trim() : trimmed;
 }
 
+function normalizeScanPayload(payload: any) {
+  if (Array.isArray(payload)) {
+    return { medicines: payload };
+  }
+
+  if (payload && !Array.isArray(payload.medicines) && payload.name) {
+    return { medicines: [payload] };
+  }
+
+  return {
+    ...payload,
+    medicines: Array.isArray(payload?.medicines) ? payload.medicines : [],
+  };
+}
+
 async function handleScanPrescription(request: Request, env: Env) {
   if (!env.GEMINI_API_KEY) {
     return jsonResponse(request, env, {
@@ -125,7 +140,7 @@ async function handleScanPrescription(request: Request, env: Env) {
   }
 
   try {
-    return jsonResponse(request, env, JSON.parse(normalizeGeminiJson(text)));
+    return jsonResponse(request, env, normalizeScanPayload(JSON.parse(normalizeGeminiJson(text))));
   } catch (error: any) {
     return jsonResponse(request, env, {
       error: "Scanning failed",

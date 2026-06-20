@@ -1,8 +1,6 @@
-import React, { useEffect, useState } from "react";
-import { Plus, User, Trash2, X, Pencil, Languages, BellRing, ShieldCheck, Database, Server, RotateCcw, Type, LayoutList } from "lucide-react";
+import React, { useState } from "react";
+import { Plus, User, Trash2, X, Pencil, Languages, ShieldCheck, Database, RotateCcw, Type, LayoutList } from "lucide-react";
 import { AppSettings, Profile } from "../types";
-import { hasApiBaseUrl } from "../services/apiConfig";
-import { notificationService } from "../services/notificationService";
 import { storageService } from "../services/storageService";
 
 interface MePageProps {
@@ -28,7 +26,6 @@ export function MePage({
 }: MePageProps) {
   const [showModal, setShowModal] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
-  const [notificationGranted, setNotificationGranted] = useState<boolean | null>(null);
   const [editingProfileId, setEditingProfileId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [type, setType] = useState<Profile["type"]>("Myself");
@@ -47,19 +44,9 @@ export function MePage({
     setConditions("");
   };
 
-  useEffect(() => {
-    void notificationService.hasPermission().then(setNotificationGranted).catch(() => setNotificationGranted(false));
-  }, []);
-
   const showNotice = (message: string) => {
     setNotice(message);
     window.setTimeout(() => setNotice(null), 3500);
-  };
-
-  const requestNotifications = async () => {
-    const granted = await notificationService.requestPermission();
-    setNotificationGranted(granted);
-    showNotice(granted ? "Pill reminder notifications are enabled." : "Notification permission was not granted.");
   };
 
   const resetLocalData = () => {
@@ -284,53 +271,12 @@ export function MePage({
                   settings.language === "ur" ? "bg-white text-blue-700 shadow-xs" : "text-slate-500"
                 }`}
               >
-                اردو
+                {"\u0627\u0631\u062f\u0648"}
               </button>
             </div>
             <p className="text-[10px] text-slate-400 mt-2 leading-relaxed">
               Urdu mode applies right-to-left layout now. Full medical copy translation can be expanded safely screen by screen.
             </p>
-          </div>
-        </div>
-
-        <div className="bg-white border border-slate-100 rounded-3xl p-4 shadow-xs space-y-3">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                <BellRing className="w-5 h-5" />
-              </div>
-              <div>
-                <h4 className="text-sm font-extrabold text-slate-900">Pill Notifications</h4>
-                <p className="text-[10.5px] text-slate-500">
-                  {notificationGranted ? "Enabled on this device" : "Permission needed for reminders"}
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={requestNotifications}
-              className="bg-slate-900 text-white text-[10px] font-extrabold px-3 py-2 rounded-xl"
-            >
-              Check
-            </button>
-          </div>
-
-          <div className="flex items-center justify-between gap-3 border-t border-slate-100 pt-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-slate-50 text-slate-600 flex items-center justify-center">
-                <Server className="w-5 h-5" />
-              </div>
-              <div>
-                <h4 className="text-sm font-extrabold text-slate-900">AI Backend</h4>
-                <p className="text-[10.5px] text-slate-500">
-                  {hasApiBaseUrl() ? "Cloudflare API connected" : "Direct mobile AI fallback"}
-                </p>
-              </div>
-            </div>
-            <span className={`text-[9.5px] font-extrabold px-2.5 py-1 rounded-full ${
-              hasApiBaseUrl() ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
-            }`}>
-              {hasApiBaseUrl() ? "ONLINE" : "LOCAL"}
-            </span>
           </div>
         </div>
 

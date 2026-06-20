@@ -50,6 +50,21 @@ if (geminiKey) {
   });
 }
 
+function normalizeScanPayload(payload: any) {
+  if (Array.isArray(payload)) {
+    return { medicines: payload };
+  }
+
+  if (payload && !Array.isArray(payload.medicines) && payload.name) {
+    return { medicines: [payload] };
+  }
+
+  return {
+    ...payload,
+    medicines: Array.isArray(payload?.medicines) ? payload.medicines : [],
+  };
+}
+
 // 1. SCAN PRESCRIPTION API (GEMINI VISION)
 app.post("/api/scan-prescription", async (req, res) => {
   try {
@@ -128,7 +143,7 @@ app.post("/api/scan-prescription", async (req, res) => {
     }
 
     const payload = JSON.parse(response.text.trim());
-    return res.json(payload);
+    return res.json(normalizeScanPayload(payload));
 
   } catch (error: any) {
     console.error("OCR Parse Error:", error);
