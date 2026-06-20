@@ -10,6 +10,7 @@
     "dev": "tsx server.ts",
     "build": "vite build && esbuild server.ts --bundle --platform=node --format=cjs --packages=external --sourcemap --outfile=dist/server.cjs",
     "start": "node dist/server.cjs",
+    "worker:deploy": "wrangler deploy",
     "cap:sync": "cap sync android",
     "android:debug": "cd android && gradlew.bat assembleDebug",
     "clean": "rm -rf dist server.js",
@@ -40,6 +41,7 @@
     "tailwindcss": "^4.1.14",
     "tsx": "^4.21.0",
     "typescript": "~5.8.2",
-    "vite": "^6.2.3"
+    "vite": "^6.2.3",
+    "wrangler": "^4.103.0"
   }
 }

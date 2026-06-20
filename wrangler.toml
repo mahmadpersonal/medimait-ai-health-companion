@@ -1,0 +1,10 @@
+name = "api"
+main = "worker/index.ts"
+compatibility_date = "2026-06-20"
+workers_dev = true
+preview_urls = false
+
+[vars]
+GEMINI_VISION_MODEL = "gemini-2.5-flash-lite"
+OPENAI_CHAT_MODEL = "gpt-4o-mini"
+ALLOWED_ORIGINS = "https://localhost,http://localhost:3000,http://localhost:5173"
