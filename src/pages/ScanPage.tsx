@@ -747,14 +747,20 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
               >
                 <div className="flex justify-between items-start gap-4">
                   <div>
-                    <span className="inline-flex max-w-[190px] flex-wrap items-center gap-x-1 gap-y-0.5 text-[10px] leading-snug font-extrabold text-white bg-blue-600 px-2.5 py-1 rounded-lg shadow-xs">
-                      {med.dosage} / {med.timing}
-                    </span>
+                    {med.dosage && (
+                      <span className="inline-flex max-w-[190px] flex-wrap items-center gap-x-1 gap-y-0.5 text-[10px] leading-snug font-extrabold text-white bg-blue-600 px-2.5 py-1 rounded-lg shadow-xs">
+                        {med.dosage}
+                      </span>
+                    )}
                     <h4 className="text-base font-extrabold text-slate-900 mt-1.5">{med.name}</h4>
-                    <p className="text-[10.5px] text-slate-500 font-semibold mt-0.5">
-                      {text.salt}: {med.salt || text.notDetected}
-                    </p>
-                    <span className="text-[11px] text-slate-500 font-medium">{text.duration}: {med.duration || text.notDetected}</span>
+                    {med.salt && (
+                      <p className="text-[10.5px] text-slate-500 font-semibold mt-0.5">
+                        {text.salt}: {med.salt}
+                      </p>
+                    )}
+                    {med.duration && (
+                      <span className="text-[11px] text-slate-500 font-medium">{text.duration}: {med.duration}</span>
+                    )}
                   </div>
 
                   {/* Actions column */}

@@ -34,6 +34,44 @@ function normalizeScanData(data: ScanResponse | ScanResponse["medicines"] | any)
   };
 }
 
+const placeholderValues = new Set([
+  "",
+  "-",
+  "--",
+  "n/a",
+  "na",
+  "nil",
+  "none",
+  "null",
+  "unknown",
+  "not found",
+  "not detected",
+  "unreadable",
+  "medicine",
+  "tablet",
+  "tab",
+  "al",
+]);
+
+function cleanText(value: unknown) {
+  return String(value ?? "")
+    .replace(/\s+/g, " ")
+    .replace(/^(medicine|tablet|tab|cap|capsule)\s*[:#-]\s*/i, "")
+    .trim();
+}
+
+function isUsefulValue(value: unknown) {
+  const cleaned = cleanText(value).toLowerCase();
+  return cleaned.length > 0 && !placeholderValues.has(cleaned);
+}
+
+function medicineKey(medicine: ScanResponse["medicines"][number]) {
+  return [medicine.name, medicine.salt, medicine.dosage]
+    .map((value) => cleanText(value).toLowerCase().replace(/[^a-z0-9]+/g, ""))
+    .filter(Boolean)
+    .join("|");
+}
+
 const openAiKey = import.meta.env.VITE_OPENAI_API_KEY || "";
 const openAiVisionModel = import.meta.env.VITE_OPENAI_VISION_MODEL || "gpt-4o-mini";
 const geminiKey = import.meta.env.VITE_GEMINI_API_KEY || "";
@@ -76,18 +114,39 @@ async function optimizeImageForOcr(imageDataUrl: string): Promise<string> {
 
 function toPrescriptionResult(data: ScanResponse): PrescriptionScanResult {
   const normalized = normalizeScanData(data);
-  const medicines = (normalized.medicines || []).map((m, idx) => ({
-    id: `med_${Date.now()}_${idx}`,
-    name: m.name || "",
-    salt: m.salt || "",
-    dosage: m.dosage || "",
-    timing: m.timing || "Morning",
-    duration: m.duration || "",
-    instructions: m.instructions || "",
-    purpose: m.purpose || "",
-    sideEffects: m.sideEffects || "",
-    precautions: m.precautions || "",
-  }));
+  const seen = new Set<string>();
+  const medicines = (normalized.medicines || [])
+    .map((m) => ({
+      ...m,
+      name: cleanText(m.name),
+      salt: isUsefulValue(m.salt) ? cleanText(m.salt) : "",
+      dosage: isUsefulValue(m.dosage) ? cleanText(m.dosage) : "",
+      timing: isUsefulValue(m.timing) ? cleanText(m.timing) : "Morning",
+      duration: isUsefulValue(m.duration) ? cleanText(m.duration) : "",
+      instructions: isUsefulValue(m.instructions) ? cleanText(m.instructions) : "",
+      purpose: isUsefulValue(m.purpose) ? cleanText(m.purpose) : "",
+      sideEffects: isUsefulValue(m.sideEffects) ? cleanText(m.sideEffects) : "",
+      precautions: isUsefulValue(m.precautions) ? cleanText(m.precautions) : "",
+    }))
+    .filter((m) => isUsefulValue(m.name))
+    .filter((m) => {
+      const key = medicineKey(m);
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .map((m, idx) => ({
+      id: `med_${Date.now()}_${idx}`,
+      name: m.name,
+      salt: m.salt,
+      dosage: m.dosage,
+      timing: m.timing,
+      duration: m.duration,
+      instructions: m.instructions,
+      purpose: m.purpose,
+      sideEffects: m.sideEffects,
+      precautions: m.precautions,
+    }));
 
   return {
     id: `scan_${Date.now()}`,
@@ -137,7 +196,7 @@ async function scanWithOpenAI(base64Image: string, language: AppLanguage): Promi
         {
           role: "system",
           content:
-            "You are MediMait's prescription OCR parser. Return only valid JSON with doctorName, clinicName, patientName, condition, and medicines. medicines must be an array of objects with name, salt, dosage, timing, duration, instructions, purpose, sideEffects, precautions. name is the visible brand/medicine name. salt is the generic ingredient/composition if visible or confidently inferable from the medicine name; otherwise empty. Extract every visible medicine or prescribed item, with no maximum count. Use empty strings when unreadable. Never invent medicines that are not visible.",
+            "You are MediMait's prescription OCR parser. Return only valid JSON with doctorName, clinicName, patientName, condition, and medicines. medicines must be an array of objects with name, salt, dosage, timing, duration, instructions, purpose, sideEffects, precautions. name is the actual visible brand/medicine name, not the generic salt. salt is the generic ingredient/composition. If a real brand or medicine name is visible, use medical knowledge to identify the likely salt, purpose, and practical instructions. Do not return empty rows, repeated rows, fragments, or placeholders. Extract every visible medicine or prescribed item, with no maximum count. Never invent medicines that are not visible.",
         },
         {
           role: "user",
@@ -145,7 +204,7 @@ async function scanWithOpenAI(base64Image: string, language: AppLanguage): Promi
             {
               type: "text",
               text:
-                `Read this prescription image carefully. Extract all visible prescription details and every visible medicine row/item. Map timing to Morning, Afternoon, Evening, or Night when possible. For each medicine, write purpose and instructions as 2-3 short helpful lines. ${languageInstruction(language)}`,
+                `Read this prescription image carefully. Extract all visible prescription details and every visible medicine row/item. Do not return empty rows, repeated rows, section headings, fragments, or placeholders. If a real brand or medicine name is visible, use medical knowledge to identify its likely salt/generic ingredient, purpose, and practical instructions. Only leave salt empty when the visible name cannot safely identify a medicine. Map timing to Morning, Afternoon, Evening, or Night when possible. For each medicine, write purpose and instructions as 2-3 short helpful lines. ${languageInstruction(language)}`,
             },
             {
               type: "image_url",
@@ -200,7 +259,7 @@ async function scanWithGemini(base64Image: string, language: AppLanguage): Promi
             parts: [
               {
                 text:
-                  `You are MediMait's prescription OCR parser. Read this prescription image carefully and return only valid JSON with doctorName, clinicName, patientName, condition, and medicines. medicines must be an array of objects with name, salt, dosage, timing, duration, instructions, purpose, sideEffects, precautions. name is the visible brand/medicine name. salt is the generic ingredient/composition if visible or confidently inferable from the medicine name; otherwise empty. Extract every visible medicine or prescribed item, with no maximum count. Use empty strings when unreadable. Never invent medicines that are not visible. Map timing to Morning, Afternoon, Evening, or Night when possible. For each medicine, write purpose and instructions as 2-3 short helpful lines. ${languageInstruction(language)}`,
+                  `You are MediMait's prescription OCR parser. Read this prescription image carefully and return only valid JSON with doctorName, clinicName, patientName, condition, and medicines. medicines must be an array of objects with name, salt, dosage, timing, duration, instructions, purpose, sideEffects, precautions. name is the visible brand/medicine name. Extract every visible medicine or prescribed item, with no maximum count. Do not return empty rows, repeated rows, section headings, fragments, or placeholders. Never invent medicines that are not visible. If a real brand or medicine name is visible, use medical knowledge to identify its likely salt/generic ingredient, purpose, and practical instructions. Only leave salt empty when the visible name cannot safely identify a medicine. Map timing to Morning, Afternoon, Evening, or Night when possible. For each medicine, write purpose and instructions as 2-3 short helpful lines. ${languageInstruction(language)}`,
               },
               {
                 inlineData: {

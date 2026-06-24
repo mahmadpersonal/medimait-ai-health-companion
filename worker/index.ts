@@ -56,17 +56,80 @@ function normalizeGeminiJson(text: string) {
 }
 
 function normalizeScanPayload(payload: any) {
+  const rawMedicines = Array.isArray(payload)
+    ? payload
+    : payload && !Array.isArray(payload.medicines) && payload.name
+      ? [payload]
+      : Array.isArray(payload?.medicines)
+        ? payload.medicines
+        : [];
+
+  const placeholderValues = new Set([
+    "",
+    "-",
+    "--",
+    "n/a",
+    "na",
+    "nil",
+    "none",
+    "null",
+    "unknown",
+    "not found",
+    "not detected",
+    "unreadable",
+    "medicine",
+    "tablet",
+    "tab",
+    "al",
+  ]);
+
+  const cleanText = (value: unknown) =>
+    String(value ?? "")
+      .replace(/\s+/g, " ")
+      .replace(/^(medicine|tablet|tab|cap|capsule)\s*[:#-]\s*/i, "")
+      .trim();
+
+  const isUsefulValue = (value: unknown) => {
+    const cleaned = cleanText(value).toLowerCase();
+    return cleaned.length > 0 && !placeholderValues.has(cleaned);
+  };
+
+  const seen = new Set<string>();
+  const medicines = rawMedicines
+    .map((medicine: any) => ({
+      ...medicine,
+      name: cleanText(medicine?.name),
+      salt: isUsefulValue(medicine?.salt) ? cleanText(medicine.salt) : "",
+      dosage: isUsefulValue(medicine?.dosage) ? cleanText(medicine.dosage) : "",
+      timing: isUsefulValue(medicine?.timing) ? cleanText(medicine.timing) : "",
+      duration: isUsefulValue(medicine?.duration) ? cleanText(medicine.duration) : "",
+      instructions: isUsefulValue(medicine?.instructions) ? cleanText(medicine.instructions) : "",
+      purpose: isUsefulValue(medicine?.purpose) ? cleanText(medicine.purpose) : "",
+      sideEffects: isUsefulValue(medicine?.sideEffects) ? cleanText(medicine.sideEffects) : "",
+      precautions: isUsefulValue(medicine?.precautions) ? cleanText(medicine.precautions) : "",
+    }))
+    .filter((medicine: any) => isUsefulValue(medicine.name))
+    .filter((medicine: any) => {
+      const key = [medicine.name, medicine.salt, medicine.dosage]
+        .map((value) => cleanText(value).toLowerCase().replace(/[^a-z0-9]+/g, ""))
+        .filter(Boolean)
+        .join("|");
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+
   if (Array.isArray(payload)) {
-    return { medicines: payload };
+    return { medicines };
   }
 
   if (payload && !Array.isArray(payload.medicines) && payload.name) {
-    return { medicines: [payload] };
+    return { medicines };
   }
 
   return {
     ...payload,
-    medicines: Array.isArray(payload?.medicines) ? payload.medicines : [],
+    medicines,
   };
 }
 
@@ -83,7 +146,10 @@ function scanPrompt(language: OcrLanguage = "en") {
     "Read this prescription image carefully and return only valid JSON.",
     "Return an object with doctorName, clinicName, patientName, condition, and medicines.",
     "medicines must be an array of objects with name, salt, dosage, timing, duration, instructions, purpose, sideEffects, precautions.",
-    "name is the visible brand/medicine name. salt is the generic ingredient/composition. If the salt is not printed but the brand is recognizable, identify the likely generic salt from medical knowledge; otherwise empty.",
+    "Do not return empty rows, repeated rows, section headings, fragments, or placeholder names such as unknown, tablet, medicine, al, or not found.",
+    "name is the actual visible brand/medicine name, not the generic salt. salt is the generic ingredient/composition.",
+    "If a real brand or medicine name is visible, use medical knowledge to identify the likely generic salt, purpose, and practical instructions.",
+    "Only leave salt empty when the visible text cannot safely identify a medicine.",
     "Extract every visible medicine or prescribed item, with no maximum count.",
     "Use empty strings when unreadable. Never invent medicines that are not visible.",
     "Map timing to Morning, Afternoon, Evening, or Night when possible.",
