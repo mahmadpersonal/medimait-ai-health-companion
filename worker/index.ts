@@ -70,21 +70,31 @@ function normalizeScanPayload(payload: any) {
   };
 }
 
-function scanPrompt() {
+type OcrLanguage = "en" | "ur";
+
+function scanPrompt(language: OcrLanguage = "en") {
+  const outputLanguage =
+    language === "ur"
+      ? "Write condition, purpose, instructions, sideEffects, and precautions in Urdu. Keep medicine names and salt/generic ingredients unchanged in their original visible language."
+      : "Write condition, purpose, instructions, sideEffects, and precautions in clear English.";
+
   return [
     "You are MediMait's prescription OCR parser.",
     "Read this prescription image carefully and return only valid JSON.",
     "Return an object with doctorName, clinicName, patientName, condition, and medicines.",
     "medicines must be an array of objects with name, salt, dosage, timing, duration, instructions, purpose, sideEffects, precautions.",
-    "name is the visible brand/medicine name. salt is the generic ingredient/composition if visible or confidently inferable from the medicine name; otherwise empty.",
+    "name is the visible brand/medicine name. salt is the generic ingredient/composition. If the salt is not printed but the brand is recognizable, identify the likely generic salt from medical knowledge; otherwise empty.",
     "Extract every visible medicine or prescribed item, with no maximum count.",
     "Use empty strings when unreadable. Never invent medicines that are not visible.",
     "Map timing to Morning, Afternoon, Evening, or Night when possible.",
-    "For purpose, use simple everyday words.",
+    "For purpose, write 2-3 short practical lines about what it is commonly used for.",
+    "For instructions, write 2-3 short practical lines about how the prescription says to take it, and add a verification note if unclear.",
+    "For sideEffects and precautions, write short useful patient-friendly lines.",
+    outputLanguage,
   ].join(" ");
 }
 
-async function scanWithGemini(image: string, env: Env) {
+async function scanWithGemini(image: string, env: Env, language: OcrLanguage) {
   if (!env.GEMINI_API_KEY) {
     throw new Error("Gemini API key is not configured on the Cloudflare Worker.");
   }
@@ -107,7 +117,7 @@ async function scanWithGemini(image: string, env: Env) {
                 data: base64Data,
               },
             },
-            { text: scanPrompt() },
+            { text: scanPrompt(language) },
           ],
         },
       ],
@@ -131,7 +141,7 @@ async function scanWithGemini(image: string, env: Env) {
   return normalizeScanPayload(JSON.parse(normalizeGeminiJson(text)));
 }
 
-async function scanWithOpenAI(image: string, env: Env) {
+async function scanWithOpenAI(image: string, env: Env, language: OcrLanguage) {
   if (!env.OPENAI_API_KEY) {
     throw new Error("OpenAI API key is not configured on the Cloudflare Worker.");
   }
@@ -148,7 +158,7 @@ async function scanWithOpenAI(image: string, env: Env) {
       model: env.OPENAI_VISION_MODEL || env.OPENAI_CHAT_MODEL || "gpt-4o-mini",
       response_format: { type: "json_object" },
       messages: [
-        { role: "system", content: scanPrompt() },
+        { role: "system", content: scanPrompt(language) },
         {
           role: "user",
           content: [
@@ -176,20 +186,20 @@ async function scanWithOpenAI(image: string, env: Env) {
 }
 
 async function handleScanPrescription(request: Request, env: Env) {
-  const { image } = await request.json() as { image?: string };
+  const { image, language } = await request.json() as { image?: string; language?: OcrLanguage };
   if (!image) {
     return jsonResponse(request, env, { error: "No image provided" }, 400);
   }
 
   let geminiError = "";
   try {
-    return jsonResponse(request, env, await scanWithGemini(image, env));
+    return jsonResponse(request, env, await scanWithGemini(image, env, language === "ur" ? "ur" : "en"));
   } catch (error: any) {
     geminiError = error?.message || "Gemini OCR failed.";
   }
 
   try {
-    const fallbackPayload = await scanWithOpenAI(image, env);
+    const fallbackPayload = await scanWithOpenAI(image, env, language === "ur" ? "ur" : "en");
     return jsonResponse(request, env, { ...fallbackPayload, ocrProvider: "openai-fallback" });
   } catch (error: any) {
     return jsonResponse(request, env, {

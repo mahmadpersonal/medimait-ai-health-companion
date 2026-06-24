@@ -49,6 +49,77 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
   const myselfProfileId = profiles.find((profile) => profile.type === "Myself")?.id || profiles[0]?.id || "";
   const compactCards = settings?.compactMedicineCards;
   const quietSafetyCopy = settings?.quietSafetyCopy;
+  const isUrdu = settings?.language === "ur";
+  const text = {
+    brand: isUrdu ? "\u0645\u06cc\u0688\u06cc \u0645\u06cc\u0679" : "MediMait",
+    scan: isUrdu ? "\u0627\u0633\u06a9\u06cc\u0646" : "Scan",
+    scanSubtitle: isUrdu ? "\u0646\u0633\u062e\u06c1 \u0627\u0633\u06a9\u06cc\u0646 \u06a9\u0631\u06cc\u06ba \u0627\u0648\u0631 \u062f\u0648\u0627 \u06a9\u06cc \u062a\u0641\u0635\u06cc\u0644 \u062f\u06cc\u06a9\u06be\u06cc\u06ba\u06d4" : "Scan prescriptions and review medicine details.",
+    scanPrescription: isUrdu ? "\u0646\u0633\u062e\u06c1 \u0627\u0633\u06a9\u06cc\u0646 \u06a9\u0631\u06cc\u06ba" : "Scan Prescription",
+    scanHelp: isUrdu ? "\u062a\u0635\u0648\u06cc\u0631 \u0644\u06cc\u06ba \u06cc\u0627 \u0646\u0633\u062e\u06c1 \u0627\u067e \u0644\u0648\u0688 \u06a9\u0631\u06cc\u06ba\u06d4" : "Take a photo or upload a prescription.",
+    camera: isUrdu ? "\u06a9\u06cc\u0645\u0631\u06c1" : "Camera",
+    gallery: isUrdu ? "\u06af\u06cc\u0644\u0631\u06cc" : "Gallery",
+    newScan: isUrdu ? "\u0646\u06cc\u0627 \u0627\u0633\u06a9\u06cc\u0646" : "New Scan",
+    retake: isUrdu ? "\u062f\u0648\u0628\u0627\u0631\u06c1" : "Retake",
+    usePhoto: isUrdu ? "\u062a\u0635\u0648\u06cc\u0631 \u0627\u0633\u062a\u0639\u0645\u0627\u0644 \u06a9\u0631\u06cc\u06ba" : "Use Photo",
+    analyzing: isUrdu ? "\u0646\u0633\u062e\u06c1 \u067e\u0691\u06be\u0627 \u062c\u0627 \u0631\u06c1\u0627 \u06c1\u06d2..." : "Reading prescription...",
+    analyzingHelp: isUrdu ? "\u062f\u0648\u0627\u0624\u06ba\u060c \u062e\u0648\u0631\u0627\u06a9 \u0627\u0648\u0631 \u06c1\u062f\u0627\u06cc\u0627\u062a \u0646\u06a9\u0627\u0644\u06cc \u062c\u0627 \u0631\u06c1\u06cc \u06c1\u06cc\u06ba\u06d4" : "Extracting medicines, dosage, salts, and instructions.",
+    extractionIncomplete: isUrdu ? "\u0627\u0633\u06a9\u06cc\u0646 \u0645\u06a9\u0645\u0644 \u0646\u06c1\u06cc\u06ba \u06c1\u0648\u0627" : "Extraction Incomplete",
+    clear: isUrdu ? "\u062e\u062a\u0645" : "Clear",
+    prescriptionImage: isUrdu ? "\u0646\u0633\u062e\u06c1 \u06a9\u06cc \u062a\u0635\u0648\u06cc\u0631" : "Prescription Image",
+    view: isUrdu ? "\u062f\u06cc\u06a9\u06be\u06cc\u06ba" : "View",
+    save: isUrdu ? "\u0633\u06cc\u0648" : "Save",
+    scanDetails: isUrdu ? "\u0627\u0633\u06a9\u06cc\u0646 \u062a\u0641\u0635\u06cc\u0644" : "Scan Details",
+    prescribedFor: isUrdu ? "\u0645\u0631\u06cc\u0636" : "Prescribed For",
+    doctor: isUrdu ? "\u0688\u0627\u06a9\u0679\u0631" : "Doctor",
+    clinic: isUrdu ? "\u06a9\u0644\u06cc\u0646\u06a9 / \u06c1\u0633\u067e\u062a\u0627\u0644" : "Clinic / Hospital",
+    condition: isUrdu ? "\u062d\u0627\u0644\u062a" : "Condition",
+    notDetected: isUrdu ? "\u0645\u0639\u0644\u0648\u0645 \u0646\u06c1\u06cc\u06ba" : "Not detected",
+    generalSymptoms: isUrdu ? "\u0639\u0627\u0645 \u0639\u0644\u0627\u0645\u0627\u062a" : "General symptoms",
+    medicinesExtracted: isUrdu ? "\u062f\u0648\u0627\u0626\u06cc\u0627\u06ba" : "Medicines Extracted",
+    salt: isUrdu ? "\u0633\u0627\u0644\u0679" : "Salt",
+    duration: isUrdu ? "\u0645\u062f\u062a" : "Duration",
+    purpose: isUrdu ? "\u06a9\u06cc\u0627 \u06a9\u0631\u062a\u06cc \u06c1\u06d2" : "What it does",
+    instructions: isUrdu ? "\u06c1\u062f\u0627\u06cc\u0627\u062a" : "Instructions",
+    sideEffects: isUrdu ? "\u0645\u0645\u06a9\u0646\u06c1 \u0627\u062b\u0631\u0627\u062a" : "Side effects",
+    precaution: isUrdu ? "\u0627\u062d\u062a\u06cc\u0627\u0637" : "Precaution",
+    addMedicine: isUrdu ? "\u062f\u0648\u0627 \u0634\u0627\u0645\u0644 \u06a9\u0631\u06cc\u06ba" : "Add medicine",
+    profileAllocation: isUrdu ? "\u0645\u0631\u06cc\u0636 \u067e\u0631\u0648\u0641\u0627\u0626\u0644" : "Patient Profile",
+    prescriptionFor: isUrdu ? "\u06cc\u06c1 \u0646\u0633\u062e\u06c1 \u06a9\u0633 \u06a9\u06d2 \u0644\u06cc\u06d2 \u06c1\u06d2\u061f" : "Who is this prescription for?",
+    addToPills: isUrdu ? "\u067e\u0644\u0632 \u0645\u06cc\u06ba \u0634\u0627\u0645\u0644" : "Add to Pills",
+    addedToPills: isUrdu ? "\u067e\u0644\u0632 \u0645\u06cc\u06ba \u0634\u0627\u0645\u0644 \u06c1\u0648 \u06af\u06cc\u0627" : "Added to Pills",
+    saveRecord: isUrdu ? "\u0631\u06cc\u06a9\u0627\u0631\u0688 \u0633\u06cc\u0648" : "Save Record",
+    recordSaved: isUrdu ? "\u0631\u06cc\u06a9\u0627\u0631\u0688 \u0633\u06cc\u0648 \u06c1\u0648 \u06af\u06cc\u0627" : "Record Saved",
+    recentScans: isUrdu ? "\u062d\u0627\u0644\u06cc\u06c1 \u0627\u0633\u06a9\u06cc\u0646" : "Recent Scans",
+    noScan: isUrdu ? "\u0627\u0628\u06be\u06cc \u06a9\u0648\u0626\u06cc \u0627\u0633\u06a9\u06cc\u0646 \u0646\u06c1\u06cc\u06ba" : "No scan results found",
+    noScanHelp: isUrdu ? "\u0646\u0633\u062e\u06c1 \u06a9\u06cc \u062a\u0635\u0648\u06cc\u0631 \u0644\u06cc\u06ba \u06cc\u0627 \u0627\u067e \u0644\u0648\u0688 \u06a9\u0631\u06cc\u06ba\u06d4" : "Take or upload a prescription to extract medication data.",
+    editMedicine: isUrdu ? "\u062f\u0648\u0627 \u06a9\u06cc \u062a\u0641\u0635\u06cc\u0644 \u0628\u062f\u0644\u06cc\u06ba" : "Edit Medicine",
+    cancel: isUrdu ? "\u0645\u0646\u0633\u0648\u062e" : "Cancel",
+    medicineName: isUrdu ? "\u062f\u0648\u0627 \u06a9\u0627 \u0646\u0627\u0645" : "Medicine Name",
+    saltGeneric: isUrdu ? "\u0633\u0627\u0644\u0679 / \u062c\u0646\u0631\u06a9 \u062c\u0632" : "Salt / Generic Ingredient",
+    dosage: isUrdu ? "\u062e\u0648\u0631\u0627\u06a9" : "Dosage",
+    timing: isUrdu ? "\u0648\u0642\u062a" : "Timing",
+    morning: isUrdu ? "\u0635\u0628\u062d" : "Morning",
+    afternoon: isUrdu ? "\u062f\u0648\u067e\u06c1\u0631" : "Afternoon",
+    evening: isUrdu ? "\u0634\u0627\u0645" : "Evening",
+    night: isUrdu ? "\u0631\u0627\u062a" : "Night",
+    applyEdits: isUrdu ? "\u062a\u0628\u062f\u06cc\u0644\u06cc\u0627\u06ba \u0645\u062d\u0641\u0648\u0638" : "Save Changes",
+    addEntry: isUrdu ? "\u062f\u0648\u0627 \u0634\u0627\u0645\u0644" : "Add Medicine",
+    allMedicinesDeleted: isUrdu ? "\u062a\u0645\u0627\u0645 \u062f\u0648\u0627\u0626\u06cc\u0627\u06ba \u062d\u0630\u0641 \u06c1\u0648 \u06af\u0626\u06cc\u06ba\u06d4 \u062f\u0648\u0627 \u0634\u0627\u0645\u0644 \u06a9\u0631\u06cc\u06ba \u06cc\u0627 \u0646\u06cc\u0627 \u0627\u0633\u06a9\u06cc\u0646 \u06a9\u0631\u06cc\u06ba\u06d4" : "All medicines were deleted. Add one manually or start a new scan.",
+    verifyShort: isUrdu ? "\u062f\u0648\u0627 \u0644\u06cc\u0646\u06d2 \u0633\u06d2 \u067e\u06c1\u0644\u06d2 \u0688\u0627\u06a9\u0679\u0631 \u06cc\u0627 \u0641\u0627\u0631\u0645\u0627\u0633\u0633\u0679 \u0633\u06d2 \u062a\u0635\u062f\u06cc\u0642 \u06a9\u0631\u06cc\u06ba\u06d4" : "Verify medicines with your doctor or pharmacist before use.",
+    verifyFull: isUrdu ? "\u062f\u0648\u0627 \u06a9\u0627 \u0646\u0627\u0645\u060c \u0648\u0642\u062a\u060c \u062e\u0648\u0631\u0627\u06a9 \u0627\u0648\u0631 \u06c1\u062f\u0627\u06cc\u0627\u062a \u062f\u0648\u0627 \u0644\u06cc\u0646\u06d2\u060c \u0628\u062f\u0644\u0646\u06d2 \u06cc\u0627 \u0631\u0648\u06a9\u0646\u06d2 \u0633\u06d2 \u067e\u06c1\u0644\u06d2 \u0688\u0627\u06a9\u0679\u0631 \u06cc\u0627 \u0641\u0627\u0631\u0645\u0627\u0633\u0633\u0679 \u0633\u06d2 \u0636\u0631\u0648\u0631 \u0645\u0644\u0627 \u0644\u06cc\u06ba\u06d4" : "Always confirm medicine names, timing, dosage, and instructions with your doctor or pharmacist before taking, changing, or stopping any prescription.",
+    noProfiles: isUrdu ? "\u0627\u0628\u06be\u06cc \u06a9\u0648\u0626\u06cc \u067e\u0631\u0648\u0641\u0627\u0626\u0644 \u0646\u06c1\u06cc\u06ba\u06d4 \u067e\u06c1\u0644\u06d2 Me \u0645\u06cc\u06ba \u067e\u0631\u0648\u0641\u0627\u0626\u0644 \u0628\u0646\u0627\u0626\u06cc\u06ba\u06d4" : "No profiles yet. Add a profile from Me first.",
+    remindersAlreadySaved: isUrdu ? "\u0631\u06cc\u0645\u0627\u0626\u0646\u0688\u0631\u0632 \u067e\u06c1\u0644\u06d2 \u0634\u0627\u0645\u0644 \u06c1\u0648 \u0686\u06a9\u06d2 \u06c1\u06cc\u06ba" : "Reminders already added",
+    recordAlreadySaved: isUrdu ? "\u0631\u06cc\u06a9\u0627\u0631\u0688 \u067e\u06c1\u0644\u06d2 \u0633\u06cc\u0648 \u06c1\u0648 \u0686\u06a9\u0627 \u06c1\u06d2" : "Record already saved",
+    zoomOut: isUrdu ? "\u0632\u0648\u0645 \u0622\u0624\u0679" : "Zoom out",
+    zoomIn: isUrdu ? "\u0632\u0648\u0645 \u0627\u0646" : "Zoom in",
+    resetZoom: isUrdu ? "\u0632\u0648\u0645 \u0631\u06cc \u0633\u06cc\u0679" : "Reset zoom",
+    close: isUrdu ? "\u0628\u0646\u062f" : "Close",
+  };
+
+  const detailText = (value: string | undefined, fallback = text.notDetected) => {
+    const cleaned = (value || "").trim();
+    return cleaned || fallback;
+  };
 
   const updateDraft = (patch: Partial<ScanDraft>) => {
     onScanDraftChange((current) => ({ ...current, ...patch }));
@@ -122,13 +193,13 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
     updateDraft({ scanResult: null, remindersSaved: false, recordSaved: false });
 
     try {
-      const result = await aiVisionService.scanPrescriptionImage(base64Img);
+      const result = await aiVisionService.scanPrescriptionImage(base64Img, settings?.language || "en");
       updateDraft({ scanResult: result });
     } catch (err: any) {
       console.error(err);
       setError(
         err.message ||
-          "Scanning failed. Ensure you configure your VITE_GEMINI_API_KEY inside AI Studio Settings."
+          (isUrdu ? "\u0627\u0633\u06a9\u06cc\u0646 \u0645\u06a9\u0645\u0644 \u0646\u06c1\u06cc\u06ba \u06c1\u0648 \u0633\u06a9\u0627\u06d4 \u062a\u0635\u0648\u06cc\u0631 \u0648\u0627\u0636\u062d \u06a9\u0631 \u06a9\u06d2 \u062f\u0648\u0628\u0627\u0631\u06c1 \u06a9\u0648\u0634\u0634 \u06a9\u0631\u06cc\u06ba\u06d4" : "Scanning failed. Please try again with a clearer prescription photo.")
       );
     } finally {
       setLoading(false);
@@ -272,7 +343,7 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
   const handleSaveAsRecord = () => {
     if (!scanResult || scanResult.medicines.length === 0) return;
     if (recordSaved) {
-      setNotice("This prescription is already saved to Files.");
+      setNotice(isUrdu ? "\u06cc\u06c1 \u0631\u06cc\u06a9\u0627\u0631\u0688 \u067e\u06c1\u0644\u06d2 \u0633\u06cc\u0648 \u06c1\u0648 \u0686\u06a9\u0627 \u06c1\u06d2\u06d4" : "This record is already saved.");
       return;
     }
 
@@ -292,14 +363,14 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
 
     onAddRecord(newRecord);
     updateDraft({ recordSaved: true, selectedProfileId: profileId });
-    setNotice("Prescription saved to Files. Your scan is still active.");
+    setNotice(isUrdu ? "\u0631\u06cc\u06a9\u0627\u0631\u0688 \u0633\u06cc\u0648 \u06c1\u0648 \u06af\u06cc\u0627\u06d4" : "Record saved.");
   };
 
   // Final Action: Add scanned medicines directly to Pills Reminder
   const handleAddToPillsReminders = () => {
     if (!scanResult || scanResult.medicines.length === 0) return;
     if (remindersSaved) {
-      setNotice("Pill reminders are already saved for this scan.");
+      setNotice(isUrdu ? "\u06cc\u06c1 \u062f\u0648\u0627\u0626\u06cc \u0631\u06cc\u0645\u0627\u0626\u0646\u0688\u0631\u0632 \u067e\u06c1\u0644\u06d2 \u0634\u0627\u0645\u0644 \u06c1\u0648 \u0686\u06a9\u06d2 \u06c1\u06cc\u06ba\u06d4" : "These pill reminders are already added.");
       return;
     }
 
@@ -331,7 +402,7 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
     });
 
     updateDraft({ remindersSaved: true, selectedProfileId: profileId });
-    setNotice(`${scanResult.medicines.length} pill reminder${scanResult.medicines.length === 1 ? "" : "s"} saved. Your scan is still active.`);
+    setNotice(isUrdu ? "\u062f\u0648\u0627\u0626\u06cc \u0631\u06cc\u0645\u0627\u0626\u0646\u0688\u0631\u0632 \u067e\u0644\u0632 \u0645\u06cc\u06ba \u0634\u0627\u0645\u0644 \u06c1\u0648 \u06af\u0626\u06d2\u06d4" : `${scanResult.medicines.length} reminder${scanResult.medicines.length === 1 ? "" : "s"} added to Pills.`);
   };
 
   const downloadImage = (source: string, filename = "medimait-prescription.png") => {
@@ -349,10 +420,10 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
       <div className="flex justify-between items-center mb-1">
         <div>
           <span className="text-xs font-bold tracking-wider uppercase text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">
-            MediMait
+            {text.brand}
           </span>
-          <h1 className="text-2xl font-extrabold text-slate-900 mt-2">Scan</h1>
-          <p className="text-xs text-slate-500 font-medium">Read a prescription in seconds using smart OCR.</p>
+          <h1 className="text-2xl font-extrabold text-slate-900 mt-2">{text.scan}</h1>
+          <p className="text-xs text-slate-500 font-medium">{text.scanSubtitle}</p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -385,9 +456,9 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
             <CameraIcon className="w-8 h-8 text-white stroke-[2]" />
           </div>
 
-          <h2 className="text-base font-bold">Scan Prescription</h2>
+          <h2 className="text-base font-bold">{text.scanPrescription}</h2>
           <p className="text-[11.5px] text-blue-100 mt-1 max-w-sm px-4">
-            Drag & drop an image, point your scanner, or upload from your library file.
+            {text.scanHelp}
           </p>
 
           <div className="flex gap-3 mt-6 w-full max-w-xs">
@@ -396,14 +467,14 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
               className="flex-1 bg-white hover:bg-slate-100 transition-colors text-blue-700 font-extrabold text-xs py-3 px-3 rounded-xl flex items-center justify-center gap-1.5 shadow-sm cursor-pointer"
             >
               <CameraIcon className="w-4 h-4 stroke-[2.2]" />
-              Camera
+              {text.camera}
             </button>
             <button
               onClick={triggerGallery}
               className="flex-1 bg-white/20 hover:bg-white/25 transition-colors text-white font-bold text-xs py-3 px-3 rounded-xl flex items-center justify-center gap-1.5 backdrop-blur-md cursor-pointer"
             >
               <ImageIcon className="w-4 h-4" />
-              Gallery
+              {text.gallery}
             </button>
           </div>
 
@@ -435,7 +506,7 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
           className="mt-4 w-full bg-white border border-blue-100 text-blue-700 rounded-2xl py-3 px-4 flex items-center justify-center gap-2 text-xs font-extrabold shadow-sm active:scale-[0.99]"
         >
           <Plus className="w-4 h-4" />
-          Start New Scan
+          {text.newScan}
         </button>
       )}
 
@@ -447,13 +518,13 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
               onClick={retakeCameraImage}
               className="bg-slate-100 text-slate-700 font-bold text-xs py-3 rounded-2xl flex items-center justify-center gap-2"
             >
-              <RotateCcw className="w-4 h-4" /> Retake
+              <RotateCcw className="w-4 h-4" /> {text.retake}
             </button>
             <button
               onClick={acceptCameraImage}
               className="bg-blue-600 text-white font-bold text-xs py-3 rounded-2xl flex items-center justify-center gap-2"
             >
-              <Check className="w-4 h-4" /> Use Photo
+              <Check className="w-4 h-4" /> {text.usePhoto}
             </button>
           </div>
         </div>
@@ -463,9 +534,9 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
       {loading && (
         <div className="mt-8 flex flex-col items-center justify-center p-8 bg-white border border-slate-100 rounded-3xl shadow-sm text-center">
           <Loader2 className="w-10 h-10 text-blue-600 animate-spin stroke-[2.2]" />
-          <h3 className="text-slate-900 font-bold text-sm mt-4">Analyzing Handwritings...</h3>
+          <h3 className="text-slate-900 font-bold text-sm mt-4">{text.analyzing}</h3>
           <p className="text-xs text-slate-500 mt-1 max-w-xs leading-relaxed">
-            Please wait while MediMait AI extracts dosages, medicines, durations, and instructions from your photo.
+            {text.analyzingHelp}
           </p>
         </div>
       )}
@@ -475,7 +546,7 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
         <div className="mt-6 bg-red-50 border border-red-100 text-red-800 rounded-2.5xl p-5 flex items-start gap-3">
           <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
           <div className="flex-1">
-            <h4 className="text-xs font-bold">Extraction Incomplete</h4>
+            <h4 className="text-xs font-bold">{text.extractionIncomplete}</h4>
             <p className="text-[11px] text-red-700/90 mt-1 leading-relaxed">
               {error}
             </p>
@@ -484,7 +555,7 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
                 onClick={() => setError(null)}
                 className="text-[10px] font-bold text-red-650 bg-red-100/50 px-3 py-1.5 rounded-lg cursor-pointer"
               >
-                Clear
+                {text.clear}
               </button>
             </div>
           </div>
@@ -492,7 +563,7 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
       )}
 
       {notice && !loading && (
-        <div className="mt-4 bg-emerald-50 border border-emerald-100 text-emerald-800 rounded-2xl p-4 flex items-start gap-3">
+        <div className="fixed top-20 left-1/2 -translate-x-1/2 z-60 w-[88%] max-w-[360px] bg-slate-900/95 text-white py-3 px-4 rounded-2xl flex items-start gap-3 shadow-2xl">
           <Check className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
           <p className="text-[11px] leading-relaxed font-semibold">{notice}</p>
         </div>
@@ -504,7 +575,7 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
           {image && (
             <div className="relative rounded-2.5xl overflow-hidden shadow-xs border border-slate-100 mb-5">
               <span className="absolute top-2.5 left-2.5 bg-slate-920/80 backdrop-blur-md text-white font-bold text-[9px] uppercase px-2.5 py-1 rounded-full">
-                Prescription Upload
+                {text.prescriptionImage}
               </span>
               <div className="absolute bottom-2.5 right-2.5 flex gap-2">
                 <button
@@ -514,13 +585,13 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
                   }}
                   className="bg-slate-900/80 text-white text-[9px] font-bold px-2.5 py-1.5 rounded-lg flex items-center gap-1"
                 >
-                  <Eye className="w-3 h-3" /> View
+                  <Eye className="w-3 h-3" /> {text.view}
                 </button>
                 <button
                   onClick={() => downloadImage(image)}
                   className="bg-white/90 text-slate-800 text-[9px] font-bold px-2.5 py-1.5 rounded-lg flex items-center gap-1"
                 >
-                  <Download className="w-3 h-3" /> Save
+                  <Download className="w-3 h-3" /> {text.save}
                 </button>
               </div>
               <img src={image} alt="Prescription snippet" className="w-full h-32 object-cover" />
@@ -530,26 +601,26 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
           {/* Extracted Header Details */}
           <div className="bg-white border border-slate-100 rounded-3xl p-5 shadow-xs mb-5">
             <h3 className="text-slate-900 font-bold text-[13.5px] uppercase tracking-wider mb-3">
-              Scan Details
+              {text.scanDetails}
             </h3>
 
             <div className="space-y-2.5 text-xs">
               <div className="flex justify-between py-1 border-b border-slate-50">
-                <span className="text-slate-400">Prescribed For</span>
-                <span className="font-semibold text-slate-800">{scanResult.patientName || "Not detected"}</span>
+                <span className="text-slate-400">{text.prescribedFor}</span>
+                <span className="font-semibold text-slate-800">{scanResult.patientName || text.notDetected}</span>
               </div>
               <div className="flex justify-between py-1 border-b border-slate-50">
-                <span className="text-slate-400">Doctor</span>
-                <span className="font-semibold text-slate-800">{scanResult.doctorName || "Not detected"}</span>
+                <span className="text-slate-400">{text.doctor}</span>
+                <span className="font-semibold text-slate-800">{scanResult.doctorName || text.notDetected}</span>
               </div>
               <div className="flex justify-between py-1 border-b border-slate-50">
-                <span className="text-slate-400">Clinic / Hospital</span>
-                <span className="font-semibold text-slate-800">{scanResult.clinicName || "Not detected"}</span>
+                <span className="text-slate-400">{text.clinic}</span>
+                <span className="font-semibold text-slate-800">{scanResult.clinicName || text.notDetected}</span>
               </div>
               <div className="flex justify-between py-1 border-b border-slate-50">
-                <span className="text-slate-400">Condition</span>
+                <span className="text-slate-400">{text.condition}</span>
                 <span className="font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
-                  {scanResult.condition || "General symptoms"}
+                  {scanResult.condition || text.generalSymptoms}
                 </span>
               </div>
             </div>
@@ -559,18 +630,18 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
           {editingMedicineId ? (
             <div className="bg-white ring-2 ring-blue-500 rounded-3xl p-5 mb-5 shadow-md">
               <div className="flex justify-between items-center mb-3">
-                <h4 className="text-slate-900 font-bold text-xs">Edit Medicine Entry</h4>
+                <h4 className="text-slate-900 font-bold text-xs">{text.editMedicine}</h4>
                 <button
                   onClick={() => setEditingMedicineId(null)}
                   className="text-[10px] uppercase font-bold text-slate-400 hover:text-slate-600 cursor-pointer"
                 >
-                  Cancel
+                  {text.cancel}
                 </button>
               </div>
 
               <div className="space-y-3">
                 <div>
-                  <label className="block text-[10.5px] font-bold text-slate-500 mb-1">Medicine Name</label>
+                  <label className="block text-[10.5px] font-bold text-slate-500 mb-1">{text.medicineName}</label>
                   <input
                     type="text"
                     value={tempMedicine.name}
@@ -580,7 +651,7 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
                 </div>
 
                 <div>
-                  <label className="block text-[10.5px] font-bold text-slate-500 mb-1">Salt / Generic Ingredient</label>
+                  <label className="block text-[10.5px] font-bold text-slate-500 mb-1">{text.saltGeneric}</label>
                   <input
                     type="text"
                     value={tempMedicine.salt || ""}
@@ -592,7 +663,7 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
 
                 <div className="grid grid-cols-2 gap-3.5">
                   <div>
-                    <label className="block text-[10.5px] font-bold text-slate-500 mb-1">Dosage</label>
+                    <label className="block text-[10.5px] font-bold text-slate-500 mb-1">{text.dosage}</label>
                     <input
                       type="text"
                       value={tempMedicine.dosage}
@@ -602,23 +673,23 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
                     />
                   </div>
                   <div>
-                    <label className="block text-[10.5px] font-bold text-slate-500 mb-1">Timing Group</label>
+                    <label className="block text-[10.5px] font-bold text-slate-500 mb-1">{text.timing}</label>
                     <select
                       value={tempMedicine.timing}
                       onChange={(e) => setTempMedicine({ ...tempMedicine, timing: e.target.value })}
                       className="w-full text-xs border border-slate-200 rounded-lg p-2 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
                     >
-                      <option value="Morning">Morning</option>
-                      <option value="Afternoon">Afternoon</option>
-                      <option value="Evening">Evening</option>
-                      <option value="Night">Night</option>
+                      <option value="Morning">{text.morning}</option>
+                      <option value="Afternoon">{text.afternoon}</option>
+                      <option value="Evening">{text.evening}</option>
+                      <option value="Night">{text.night}</option>
                     </select>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3.5">
                   <div>
-                    <label className="block text-[10.5px] font-bold text-slate-500 mb-1">Duration</label>
+                    <label className="block text-[10.5px] font-bold text-slate-500 mb-1">{text.duration}</label>
                     <input
                       type="text"
                       value={tempMedicine.duration}
@@ -628,7 +699,7 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
                     />
                   </div>
                   <div>
-                    <label className="block text-[10.5px] font-bold text-slate-500 mb-1">Instructions</label>
+                    <label className="block text-[10.5px] font-bold text-slate-500 mb-1">{text.instructions}</label>
                     <input
                       type="text"
                       value={tempMedicine.instructions}
@@ -640,7 +711,7 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
                 </div>
 
                 <div>
-                  <label className="block text-[10.5px] font-bold text-slate-500 mb-1">Simple Purpose (Everyday words)</label>
+                  <label className="block text-[10.5px] font-bold text-slate-500 mb-1">{text.purpose}</label>
                   <input
                     type="text"
                     value={tempMedicine.purpose}
@@ -655,7 +726,7 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
                   onClick={handleSaveEditedMedicine}
                   className="w-full bg-blue-600 text-white text-xs font-bold py-2.5 rounded-xl cursor-pointer hover:bg-blue-700 transition-colors"
                 >
-                  Apply Review Edits
+                  {text.applyEdits}
                 </button>
               </div>
             </div>
@@ -663,7 +734,7 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
 
           {/* MEDICINES LIST FOR REVIEW */}
           <h3 className="text-slate-900 font-bold text-[14px] uppercase tracking-wider mb-3">
-            Medicines Extracted ({scanResult.medicines.length})
+            {text.medicinesExtracted} ({scanResult.medicines.length})
           </h3>
 
           <div className="space-y-4">
@@ -676,14 +747,14 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
               >
                 <div className="flex justify-between items-start gap-4">
                   <div>
-                    <span className="text-[10px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 rounded-md">
+                    <span className="inline-flex max-w-[190px] flex-wrap items-center gap-x-1 gap-y-0.5 text-[10px] leading-snug font-extrabold text-white bg-blue-600 px-2.5 py-1 rounded-lg shadow-xs">
                       {med.dosage} / {med.timing}
                     </span>
                     <h4 className="text-base font-extrabold text-slate-900 mt-1.5">{med.name}</h4>
                     <p className="text-[10.5px] text-slate-500 font-semibold mt-0.5">
-                      Salt: {med.salt || "Not detected"}
+                      {text.salt}: {med.salt || text.notDetected}
                     </p>
-                    <span className="text-[11px] text-slate-500 font-medium">Duration: {med.duration}</span>
+                    <span className="text-[11px] text-slate-500 font-medium">{text.duration}: {med.duration || text.notDetected}</span>
                   </div>
 
                   {/* Actions column */}
@@ -705,23 +776,23 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
 
                 <div className="mt-3.5 pt-3.5 border-t border-slate-50 space-y-2 text-xs text-slate-600">
                   <div>
-                    <strong className="text-slate-800">What it does:</strong>{" "}
-                    <span className="text-slate-600">{med.purpose}</span>
+                    <strong className="text-slate-800">{text.purpose}:</strong>{" "}
+                    <span className="text-slate-600 whitespace-pre-line">{detailText(med.purpose)}</span>
                   </div>
                   <div>
-                    <strong className="text-slate-800">Instructions:</strong>{" "}
-                    <span className="text-slate-600">{med.instructions}</span>
+                    <strong className="text-slate-800">{text.instructions}:</strong>{" "}
+                    <span className="text-slate-600 whitespace-pre-line">{detailText(med.instructions)}</span>
                   </div>
                   {med.sideEffects && (
                     <div>
-                      <strong className="text-red-500">Side effects:</strong>{" "}
-                      <span className="text-slate-500 text-[11px]">{med.sideEffects}</span>
+                      <strong className="text-red-500">{text.sideEffects}:</strong>{" "}
+                    <span className="text-slate-500 text-[11px] whitespace-pre-line">{med.sideEffects}</span>
                     </div>
                   )}
                   {med.precautions && (
                     <div>
-                      <strong className="text-amber-600">Precaution:</strong>{" "}
-                      <span className="text-slate-500 text-[11px]">{med.precautions}</span>
+                      <strong className="text-amber-600">{text.precaution}:</strong>{" "}
+                      <span className="text-slate-500 text-[11px] whitespace-pre-line">{med.precautions}</span>
                     </div>
                   )}
                 </div>
@@ -730,7 +801,7 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
 
             {scanResult.medicines.length === 0 && (
               <div className="p-6 bg-white border border-dashed text-center rounded-2.5xl text-slate-400">
-                All Extracted medicines deleted. Please add manually or scan another.
+                {text.allMedicinesDeleted}
               </div>
             )}
           </div>
@@ -740,26 +811,26 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
               onClick={() => setManualAddMode(true)}
               className="text-xs font-bold text-blue-600 hover:text-blue-700 py-2.5 flex items-center gap-1 cursor-pointer"
             >
-              <Plus className="w-4 h-4" /> Add medicine manually
+              <Plus className="w-4 h-4" /> {text.addMedicine}
             </button>
           </div>
 
           {/* MANUAL ADD CONTAINER */}
           {manualAddMode && (
             <div className="bg-slate-50 border border-slate-200 rounded-3xl p-4 mt-3">
-              <h4 className="text-xs font-bold text-slate-800 mb-2.5">Add Medicine Entry</h4>
+              <h4 className="text-xs font-bold text-slate-800 mb-2.5">{text.addMedicine}</h4>
               
               <div className="space-y-2.5">
                 <input
                   type="text"
-                  placeholder="Medicine Name"
+                  placeholder={text.medicineName}
                   value={tempMedicine.name}
                   onChange={(e) => setTempMedicine({ ...tempMedicine, name: e.target.value })}
                   className="w-full text-xs border border-slate-250 bg-white rounded-lg p-2 focus:outline-none"
                 />
                 <input
                   type="text"
-                  placeholder="Salt / generic ingredient"
+                  placeholder={text.saltGeneric}
                   value={tempMedicine.salt || ""}
                   onChange={(e) => setTempMedicine({ ...tempMedicine, salt: e.target.value })}
                   className="w-full text-xs border border-slate-250 bg-white rounded-lg p-2 focus:outline-none"
@@ -767,7 +838,7 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
                 <div className="grid grid-cols-2 gap-2">
                   <input
                     type="text"
-                    placeholder="Dosage (dosage amount)"
+                    placeholder={text.dosage}
                     value={tempMedicine.dosage}
                     onChange={(e) => setTempMedicine({ ...tempMedicine, dosage: e.target.value })}
                     className="w-full text-xs border border-slate-250 bg-white rounded-lg p-2 focus:outline-none"
@@ -777,23 +848,23 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
                     onChange={(e) => setTempMedicine({ ...tempMedicine, timing: e.target.value })}
                     className="w-full text-xs border border-slate-250 bg-white rounded-lg p-2 focus:outline-none"
                   >
-                    <option value="Morning">Morning</option>
-                    <option value="Afternoon">Afternoon</option>
-                    <option value="Evening">Evening</option>
-                    <option value="Night">Night</option>
+                    <option value="Morning">{text.morning}</option>
+                    <option value="Afternoon">{text.afternoon}</option>
+                    <option value="Evening">{text.evening}</option>
+                    <option value="Night">{text.night}</option>
                   </select>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <input
                     type="text"
-                    placeholder="Duration (e.g. 10 days)"
+                    placeholder={text.duration}
                     value={tempMedicine.duration}
                     onChange={(e) => setTempMedicine({ ...tempMedicine, duration: e.target.value })}
                     className="w-full text-xs border border-slate-250 bg-white rounded-lg p-2 focus:outline-none"
                   />
                   <input
                     type="text"
-                    placeholder="Instructions"
+                    placeholder={text.instructions}
                     value={tempMedicine.instructions}
                     onChange={(e) => setTempMedicine({ ...tempMedicine, instructions: e.target.value })}
                     className="w-full text-xs border border-slate-250 bg-white rounded-lg p-2 focus:outline-none"
@@ -801,7 +872,7 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
                 </div>
                 <input
                   type="text"
-                  placeholder="Purpose (simple explanation)"
+                  placeholder={text.purpose}
                   value={tempMedicine.purpose}
                   onChange={(e) => setTempMedicine({ ...tempMedicine, purpose: e.target.value })}
                   className="w-full text-xs border border-slate-250 bg-white rounded-lg p-2 focus:outline-none"
@@ -811,13 +882,13 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
                     onClick={handleAddMedicineManually}
                     className="flex-1 bg-slate-900 text-white font-bold text-xs py-2 rounded-lg cursor-pointer"
                   >
-                    Add entry
+                    {text.addEntry}
                   </button>
                   <button
                     onClick={() => setManualAddMode(false)}
                     className="bg-slate-200 text-slate-700 font-bold text-xs py-2 px-3 rounded-lg"
                   >
-                    Cancel
+                    {text.cancel}
                   </button>
                 </div>
               </div>
@@ -830,12 +901,11 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
             <p className="text-[10.5px] leading-relaxed text-amber-800">
               {quietSafetyCopy ? (
                 <>
-                  <strong>Check first:</strong> Verify medicines with your doctor or pharmacist.
+                  <strong>{isUrdu ? "\u067e\u06c1\u0644\u06d2 \u062a\u0635\u062f\u06cc\u0642:" : "Check first:"}</strong> {text.verifyShort}
                 </>
               ) : (
                 <>
-                  <strong>Confirm with your doctor/pharmacist:</strong> Always verify medicine names, timing dosages,
-                  and instructions before taking, changing, or stopping any prescription.
+                  <strong>{isUrdu ? "\u0688\u0627\u06a9\u0679\u0631 \u0633\u06d2 \u062a\u0635\u062f\u06cc\u0642:" : "Confirm with your doctor/pharmacist:"}</strong> {text.verifyFull}
                 </>
               )}
             </p>
@@ -843,8 +913,8 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
 
           {/* CHOOSE PROFILE CONTEXT */}
           <div className="mt-5 bg-white border border-slate-105 rounded-3xl p-5 shadow-xs">
-            <h4 className="text-xs font-bold text-slate-800 mb-2">Patient Profile allocation</h4>
-            <label className="block text-[11px] text-slate-500 mb-2">Who is this prescription for?</label>
+            <h4 className="text-xs font-bold text-slate-800 mb-2">{text.profileAllocation}</h4>
+            <label className="block text-[11px] text-slate-500 mb-2">{text.prescriptionFor}</label>
             <select
               value={selectedProfileId}
               onChange={(e) => updateDraft({ selectedProfileId: e.target.value })}
@@ -858,7 +928,7 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
             </select>
             {profiles.length === 0 && (
               <p className="text-[10.5px] text-red-500 mt-2.5">
-                No profiles created yet. Navigate to the &quot;Me&quot; screen to add parent or user profiles first!
+                {text.noProfiles}
               </p>
             )}
           </div>
@@ -868,25 +938,25 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
             <button
               onClick={handleAddToPillsReminders}
               disabled={scanResult.medicines.length === 0 || remindersSaved}
-              title={remindersSaved ? "Pill reminders already saved for this scan" : "Set pill reminders"}
+              title={remindersSaved ? text.remindersAlreadySaved : text.addToPills}
               className={`w-full font-bold text-xs py-3.5 px-4 rounded-2xl flex items-center justify-center gap-2 shadow-sm cursor-pointer disabled:cursor-not-allowed ${
                 remindersSaved ? "bg-slate-200 text-slate-500" : "bg-slate-900 hover:bg-slate-800 text-white disabled:opacity-50"
               }`}
             >
               <Play className={`w-4 h-4 stroke-[3] ${remindersSaved ? "text-slate-400" : "text-emerald-400"}`} />
-              {remindersSaved ? "Pill Reminders Saved" : `Set Pill Reminders (${scanResult.medicines.length})`}
+              {remindersSaved ? text.addedToPills : `${text.addToPills} (${scanResult.medicines.length})`}
             </button>
 
             <button
               onClick={handleSaveAsRecord}
               disabled={scanResult.medicines.length === 0 || recordSaved}
-              title={recordSaved ? "Prescription already saved to Files" : "Save prescription to Files"}
+              title={recordSaved ? text.recordAlreadySaved : text.saveRecord}
               className={`w-full font-bold text-xs py-3.5 px-4 rounded-2xl flex items-center justify-center gap-2 shadow-sm cursor-pointer disabled:cursor-not-allowed ${
                 recordSaved ? "bg-slate-200 text-slate-500" : "bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50"
               }`}
             >
               <Save className="w-4 h-4 stroke-[2]" />
-              {recordSaved ? "Saved to Files" : "Save to Files / Records"}
+              {recordSaved ? text.recordSaved : text.saveRecord}
             </button>
           </div>
         </div>
@@ -895,14 +965,14 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
       {/* RECENT SCANS EMPTY STATE */}
       {!scanResult && !loading && (
         <div className="mt-6">
-          <h3 className="text-xs font-bold text-slate-400 tracking-wider uppercase mb-3">Recent Scans</h3>
+          <h3 className="text-xs font-bold text-slate-400 tracking-wider uppercase mb-3">{text.recentScans}</h3>
           <div className="border border-slate-100 bg-white rounded-3xl p-8 text-center text-slate-400">
             <div className="w-10 h-10 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-3 text-slate-400">
               <ImageIcon className="w-5 h-5 stroke-[1.8]" />
             </div>
-            <h4 className="text-slate-800 font-bold text-xs mb-1">No scan results found</h4>
+            <h4 className="text-slate-800 font-bold text-xs mb-1">{text.noScan}</h4>
             <p className="text-[10.5px] text-slate-400 max-w-xs mx-auto">
-              Please take a photo of your doctor prescription with camera or upload file to extract medication data.
+              {text.noScanHelp}
             </p>
           </div>
         </div>
@@ -911,33 +981,33 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
       {viewingImage && (
         <div className="absolute inset-0 bg-slate-950/95 z-60 flex flex-col">
           <div className="h-14 px-4 flex items-center justify-between text-white border-b border-white/10">
-            <span className="text-xs font-extrabold">Prescription Image</span>
+            <span className="text-xs font-extrabold">{text.prescriptionImage}</span>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setImageScale((value) => Math.max(1, value - 0.25))}
                 className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center"
-                title="Zoom out"
+                title={text.zoomOut}
               >
                 <ZoomOut className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setImageScale((value) => Math.min(4, value + 0.25))}
                 className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center"
-                title="Zoom in"
+                title={text.zoomIn}
               >
                 <ZoomIn className="w-4 h-4" />
               </button>
               <button
                 onClick={() => setImageScale(1)}
                 className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center"
-                title="Reset zoom"
+                title={text.resetZoom}
               >
                 <RotateCcw className="w-4 h-4" />
               </button>
               <button
                 onClick={() => downloadImage(viewingImage)}
                 className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center"
-                title="Save image"
+                title={text.save}
               >
                 <Download className="w-4 h-4" />
               </button>
@@ -947,7 +1017,7 @@ export function ScanPage({ onAddRecord, onAddReminder, profiles, setActiveTab, p
                   setImageScale(1);
                 }}
                 className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center"
-                title="Close"
+                title={text.close}
               >
                 <span className="text-lg leading-none">x</span>
               </button>

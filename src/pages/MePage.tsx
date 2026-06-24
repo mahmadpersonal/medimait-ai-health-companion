@@ -275,7 +275,9 @@ export function MePage({
               </button>
             </div>
             <p className="text-[10px] text-slate-400 mt-2 leading-relaxed">
-              Urdu mode applies right-to-left layout now. Full medical copy translation can be expanded safely screen by screen.
+              {settings.language === "ur"
+                ? "\u0627\u0631\u062f\u0648 \u0645\u0648\u0688 \u0627\u06cc\u067e \u06a9\u06cc \u0627\u06c1\u0645 \u0627\u0633\u06a9\u0631\u06cc\u0646\u0632 \u0627\u0648\u0631 \u0627\u0633\u06a9\u06cc\u0646 \u06c1\u062f\u0627\u06cc\u0627\u062a \u067e\u0631 \u0644\u0627\u06af\u0648 \u06c1\u0648\u062a\u0627 \u06c1\u06d2\u06d4"
+                : "Applies Urdu labels, right-to-left layout, and translated scan guidance where available."}
             </p>
           </div>
         </div>

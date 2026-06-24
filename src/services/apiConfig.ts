@@ -18,7 +18,7 @@ export function apiUrl(path: string) {
 
   if (isPackagedAndroidWebView()) {
     throw new Error(
-      "MediMait AI services are not configured for this mobile build. Set VITE_API_BASE_URL to your deployed MediMait API server and rebuild the APK."
+      "MediMait AI is unavailable right now. Please check your internet connection and try again."
     );
   }
 

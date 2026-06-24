@@ -52,7 +52,7 @@ async function sendWithServer(messages: ChatMessage[], useSavedRecordsEnabled: b
 async function sendWithOpenAI(messages: ChatMessage[], contextData?: any) {
   if (!openAiKey) {
     throw new Error(
-      "MediBot is not configured. Add VITE_OPENAI_API_KEY for direct mobile chat or VITE_API_BASE_URL for the MediMait API server."
+      "MediBot is unavailable right now. Please check your internet connection and try again."
     );
   }
 
