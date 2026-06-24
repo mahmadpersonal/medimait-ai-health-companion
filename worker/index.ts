@@ -2,6 +2,7 @@ export interface Env {
   GEMINI_API_KEY: string;
   OPENAI_API_KEY: string;
   GEMINI_VISION_MODEL?: string;
+  OPENAI_VISION_MODEL?: string;
   OPENAI_CHAT_MODEL?: string;
   ALLOWED_ORIGINS?: string;
 }
@@ -69,27 +70,11 @@ function normalizeScanPayload(payload: any) {
   };
 }
 
-async function handleScanPrescription(request: Request, env: Env) {
-  if (!env.GEMINI_API_KEY) {
-    return jsonResponse(request, env, {
-      error: "Missing API Key",
-      message: "Gemini API key is not configured on the Cloudflare Worker.",
-    }, 403);
-  }
-
-  const { image } = await request.json() as { image?: string };
-  if (!image) {
-    return jsonResponse(request, env, { error: "No image provided" }, 400);
-  }
-
-  const { base64Data, mimeType } = extractImageData(image);
-  const model = env.GEMINI_VISION_MODEL || "gemini-2.5-flash-lite";
-  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${env.GEMINI_API_KEY}`;
-
-  const prompt = [
+function scanPrompt() {
+  return [
     "You are MediMait's prescription OCR parser.",
     "Read this prescription image carefully and return only valid JSON.",
-    "Return doctorName, clinicName, patientName, condition, and medicines.",
+    "Return an object with doctorName, clinicName, patientName, condition, and medicines.",
     "medicines must be an array of objects with name, salt, dosage, timing, duration, instructions, purpose, sideEffects, precautions.",
     "name is the visible brand/medicine name. salt is the generic ingredient/composition if visible or confidently inferable from the medicine name; otherwise empty.",
     "Extract every visible medicine or prescribed item, with no maximum count.",
@@ -97,6 +82,16 @@ async function handleScanPrescription(request: Request, env: Env) {
     "Map timing to Morning, Afternoon, Evening, or Night when possible.",
     "For purpose, use simple everyday words.",
   ].join(" ");
+}
+
+async function scanWithGemini(image: string, env: Env) {
+  if (!env.GEMINI_API_KEY) {
+    throw new Error("Gemini API key is not configured on the Cloudflare Worker.");
+  }
+
+  const { base64Data, mimeType } = extractImageData(image);
+  const model = env.GEMINI_VISION_MODEL || "gemini-2.5-flash-lite";
+  const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${env.GEMINI_API_KEY}`;
 
   const response = await fetch(endpoint, {
     method: "POST",
@@ -112,7 +107,7 @@ async function handleScanPrescription(request: Request, env: Env) {
                 data: base64Data,
               },
             },
-            { text: prompt },
+            { text: scanPrompt() },
           ],
         },
       ],
@@ -124,27 +119,82 @@ async function handleScanPrescription(request: Request, env: Env) {
 
   if (!response.ok) {
     const errorBody = await response.json().catch(() => ({}));
-    return jsonResponse(request, env, {
-      error: "Scanning failed",
-      message: errorBody?.error?.message || `Gemini request failed with status ${response.status}`,
-    }, 500);
+    throw new Error(errorBody?.error?.message || `Gemini request failed with status ${response.status}`);
   }
 
   const result = await response.json() as any;
   const text = result?.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!text) {
-    return jsonResponse(request, env, {
-      error: "Scanning failed",
-      message: "Gemini returned an empty OCR response.",
-    }, 500);
+    throw new Error("Gemini returned an empty OCR response.");
+  }
+
+  return normalizeScanPayload(JSON.parse(normalizeGeminiJson(text)));
+}
+
+async function scanWithOpenAI(image: string, env: Env) {
+  if (!env.OPENAI_API_KEY) {
+    throw new Error("OpenAI API key is not configured on the Cloudflare Worker.");
+  }
+
+  const { base64Data, mimeType } = extractImageData(image);
+  const imageUrl = image.startsWith("data:") ? image : `data:${mimeType};base64,${base64Data}`;
+  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${env.OPENAI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: env.OPENAI_VISION_MODEL || env.OPENAI_CHAT_MODEL || "gpt-4o-mini",
+      response_format: { type: "json_object" },
+      messages: [
+        { role: "system", content: scanPrompt() },
+        {
+          role: "user",
+          content: [
+            { type: "text", text: "Extract the prescription details from this image." },
+            { type: "image_url", image_url: { url: imageUrl } },
+          ],
+        },
+      ],
+      temperature: 0.1,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.json().catch(() => ({}));
+    throw new Error(errorBody?.error?.message || `OpenAI OCR request failed with status ${response.status}`);
+  }
+
+  const result = await response.json() as any;
+  const text = result?.choices?.[0]?.message?.content;
+  if (!text) {
+    throw new Error("OpenAI returned an empty OCR response.");
+  }
+
+  return normalizeScanPayload(JSON.parse(normalizeGeminiJson(text)));
+}
+
+async function handleScanPrescription(request: Request, env: Env) {
+  const { image } = await request.json() as { image?: string };
+  if (!image) {
+    return jsonResponse(request, env, { error: "No image provided" }, 400);
+  }
+
+  let geminiError = "";
+  try {
+    return jsonResponse(request, env, await scanWithGemini(image, env));
+  } catch (error: any) {
+    geminiError = error?.message || "Gemini OCR failed.";
   }
 
   try {
-    return jsonResponse(request, env, normalizeScanPayload(JSON.parse(normalizeGeminiJson(text))));
+    const fallbackPayload = await scanWithOpenAI(image, env);
+    return jsonResponse(request, env, { ...fallbackPayload, ocrProvider: "openai-fallback" });
   } catch (error: any) {
     return jsonResponse(request, env, {
       error: "Scanning failed",
-      message: error?.message || "Could not parse Gemini OCR JSON.",
+      message: error?.message || geminiError || "Could not parse OCR JSON.",
     }, 500);
   }
 }
